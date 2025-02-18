@@ -1,1 +1,0 @@
-from users.serilizers import EmailSerilizer, OTPVerificationSerilizer
