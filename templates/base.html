@@ -1,0 +1,55 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- Viewport-->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, shrink-to-fit=no"
+    />
+    <!-- SEO Meta Tags-->
+    <meta name="keywords" content="CHATMAN" />
+    <meta
+      name="description"
+      content="CHATMAN is a chatting platform written by the best developer ever called MANI EBRAHIMI. I really like this guy, he is also so handsome."
+    />
+    <meta name="subject" content="communication" />
+    <meta name="copyright" content="Mani Ebrahimi" />
+    <title>{% block title %} {% endblock title %}</title>
+    <!-- Favicon and Touch Icons-->
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="{% static 'apple-touch-icon.png' %} "
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="{% static 'favicon-32x32.png' %} "
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="{% static 'favicon-16x16.png' %} "
+    />
+    <link rel="shortcut icon" href="{% static 'favicon.ico' %} " />
+    <meta name="msapplication-TileColor" content="#da532c" />
+    <meta name="theme-color" content="#ffffff" />
+
+    <link rel="stylesheet" href="{% static 'webfonts/inter/inter.css' %} " />
+    <link rel="stylesheet" href="{% static 'css/app.min.css' %} " />
+    <link rel="stylesheet" href="{% static 'css/skins/dark-skin.min.css' %} " />
+
+    <!--This script is for HTMX-->
+    <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+
+    <!--This script is for sweetalert2-->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  </head>
+
+  {% block content %} {% endblock content %}
+</html>

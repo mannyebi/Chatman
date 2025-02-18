@@ -1,0 +1,103 @@
+{% extends 'base.html' %} 
+{% load static %} 
+
+{% block content %}
+<body class="authentication-page">
+  <!-- Main Layout Start -->
+  <div class="main-layout card-bg-1">
+    <div class="container d-flex flex-column">
+      <div
+        class="row no-gutters text-center align-items-center justify-content-center min-vh-100"
+      >
+        <div class="col-12 col-md-6 col-lg-5 col-xl-4">
+          <h1 class="font-weight-bold">Sign in</h1>
+          <p class="text-dark mb-3">We are Different, We Make You Different.</p>
+          <form class="mb-3" method="POST">
+            {% csrf_token %}
+            <div class="form-group">
+              <label for="email" class="sr-only">Email Address</label>
+              <input
+                type="email"
+                name="email"
+                class="form-control form-control-md"
+                id="email"
+                placeholder="Enter your email"
+              />
+            </div>
+            <div class="form-group">
+              <label for="password" class="sr-only">Password</label>
+              <input
+                type="password"
+                class="form-control form-control-md"
+                id="password"
+                name="password"
+                placeholder="Enter your password"
+              />
+            </div>
+            <div class="form-group d-flex justify-content-between">
+              <div class="custom-control custom-checkbox">
+                <input
+                  type="checkbox"
+                  class="custom-control-input"
+                  checked=""
+                  id="checkbox-remember"
+                />
+                <label
+                  class="custom-control-label text-muted font-size-sm"
+                  for="checkbox-remember"
+                  >Remember me</label
+                >
+              </div>
+              <a class="font-size-sm" href="./reset-password.html"
+                >Reset password</a
+              >
+            </div>
+            <button
+              class="btn btn-primary btn-lg btn-block text-uppercase font-weight-semibold"
+              type="submit"
+            >
+              Sign in
+            </button>
+          </form>
+          <p>
+            Don't have an account?
+            <a class="font-weight-semibold" href="./signup.html">Sign up</a>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Main Layout End -->
+
+  <!-- Javascript Files -->
+  <script src="{% static 'vendors/jquery/jquery-3.5.0.min.js' %} "></script>
+  <script src="{% static 'vendors/bootstrap/bootstrap.bundle.min.js' %} "></script>
+  <script src="{% static 'vendors/svg-inject/svg-inject.min.js' %} "></script>
+  <script src="{% static 'js/app.js' %} "></script>
+</body>
+
+{% for message in messages %}
+  
+  {% if message.tags == "error" %}
+    <script>
+      const Toast = Swal.mixin({
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 5000,
+      timerProgressBar: true,
+      didOpen: (toast) => {
+        toast.onmouseenter = Swal.stopTimer;
+        toast.onmouseleave = Swal.resumeTimer;
+      }
+      });
+      Toast.fire({
+        icon: "error",
+        title: "{{message}}"
+      });
+    </script>
+  {% endif %}
+    
+{% endfor %}
+
+{% endblock content %}
