@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view, authentication_classes
 from rest_framework.response import Response
 from rest_framework import status
-from .serilizers import EmailSerilizer, OTPVerificationSerilizer, UserLoginSerializer
+from .serilizers import SignupSerializer, OTPVerificationSerilizer, UserLoginSerializer
 from .services import services
 from .models import User
 from django.db import transaction
@@ -16,12 +16,15 @@ from django_ratelimit.decorators import ratelimit
 @authentication_classes([ApiKeyAuthentication])
 @ratelimit(key="ip", rate="5/m", method="POST", block=True)
 def send_otp_api(request):
-    serializer  = EmailSerilizer(data=request.data)
+    serializer  = SignupSerializer(data=request.data)
+
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     email = serializer.validated_data['email']
-    new_user = services.new_user_checker(email) #user instance will be returned if user is not created, or its created but inactive. else None will be returned
+    password = serializer.validated_data['password']
+    
+    new_user = services.new_user_checker(email, password) #user instance will be returned if user is not created, or its created but inactive. else None will be returned
 
     if not new_user: #check if user is not signed up before. or its inactive
         return Response({"error":"User already exists, please login"}, status=status.HTTP_400_BAD_REQUEST)

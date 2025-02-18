@@ -10,6 +10,10 @@ def user_login(request):
     if request.method == "POST":
         email = request.POST.get("email")
         password = request.POST.get("password")
+
+        if not email or not password:
+            messages.error(request, "please enter email and password")
+
         user = services.authenticate_user(request, email, password)
         
         if user:
@@ -25,15 +29,23 @@ def user_login(request):
 
 
 #---------------------sign up flow----------------------------
-def user_signup(request):
+
+def user_signup(request): #1
     return render(request, "users/signup/email.html")
 
 
-def send_otp(request): #1
+def send_otp(request): #2
     if request.method == "POST":
         email = request.POST.get("email")
+        password = request.POST.get("password")
 
-        new_user = services.new_user_checker(email)
+
+        #this error handling is so crucial. if we don't redirect to the "sign_up" url, the `new_user` error handler will redirect it to login page. so don't change it.
+        if not email or not password:
+            messages.error(request, "please enter email and password")
+            return services.htmx_redirect("sign_up")
+
+        new_user = services.new_user_checker(email, password)
 
         if not new_user:
             messages.error(request, "this user exists, please login")
@@ -54,7 +66,7 @@ def send_otp(request): #1
     
 
 
-def validate_otp(request): #2
+def validate_otp(request): #3
     if request.method == "POST":
 
         inputed_otp = request.POST.get("otp")

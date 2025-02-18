@@ -57,7 +57,7 @@ def get_user_instance(email):
     except User.DoesNotExist:
         return None
 
-def new_user_checker(email):
+def new_user_checker(email, password=None):
     """return a user instance if user is not created, ot its created but it's inactive. else return None
     """
     try:
@@ -71,6 +71,8 @@ def new_user_checker(email):
 
     except User.DoesNotExist:
         user = User.objects.create(email=email) #create a new user record if the user is not signed up before.
+        user.set_password(password)
+        user.save()
         return user
 
 

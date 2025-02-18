@@ -3,8 +3,9 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
-class EmailSerilizer(serializers.Serializer):
+class SignupSerializer(serializers.Serializer):
     email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
 
 
 class OTPVerificationSerilizer(serializers.Serializer):
