@@ -154,6 +154,8 @@ class ValidateResetPasswordOtp(View):
     form_class = ChangePasswordForm
     template = "users/reset_password/change_password.html"
 
+    def get(self, request, *args, **kwargs):
+        return redirect("reset_password")
 
     def post(self, request, *args, **kwargs):
         form = self.form_class
@@ -182,6 +184,11 @@ class ValidateResetPasswordOtp(View):
 
 class ChangePassword(View):
     form_class = ChangePasswordForm
+    
+    def get(self, request, *args, **kwargs):
+        return redirect("reset_password")
+    
+
     def post(self, request, *args, **kwargs):
         form = self.form_class(request.POST)
         email = services.get_session(request, "email")
@@ -201,9 +208,9 @@ class ChangePassword(View):
             else:
                 print('goh 1')
                 messages.error(request, "passwords are not similar")
-                return services.htmx_redirect("reset_password")
+                return services.htmx_redirect("change_password")
         else:
             messages.error(request, "please fill the form correctly")
-            return services.htmx_redirect('reset_password')        
+            return HttpResponse(status=204)       
 
 #--------------
