@@ -1,4 +1,4 @@
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate
 import random
 from django.urls import reverse
 from django.shortcuts import HttpResponse
@@ -87,6 +87,7 @@ def generate_hotp_instance(secret):
 def send_otp(email, hotp, counter):
     """get the otp and send it
     """
+    print(counter, "counter -----------------")
     otp = hotp.at(counter)
     send_email(email, otp)
 

@@ -1,0 +1,22 @@
+<form class="mb-3" method="POST" action="{% url 'validate_rp_otp' %}" hx-target="this" hx-swap="outerHTML" >
+    {% csrf_token %}
+    
+    <div class="form-group">
+      <input type="hidden" value="{{email}}" name="email" >
+      <label for="otp" class="sr-only">Enter the code</label>
+      <input
+        type="text"
+        class="form-control form-control-md"
+        id="otp"
+        placeholder="input the code emailed to you"
+        name="otp"
+      />
+    </div>
+    <button
+      class="btn btn-primary btn-lg btn-block text-uppercase font-weight-semibold"
+      type="submit"
+    >
+      submit
+    </button>
+</form>
+  
