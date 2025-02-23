@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.views import View
 from users.models import User
 from chat.models import Message
@@ -24,9 +24,10 @@ class PrivateChatRoom(View):
 
     def get(self, request, other_user_id):
         contact_model = self.contacts_model
-        contact = contact_model.objects.get(user_id=other_user_id)
+        contact = get_object_or_404(contact_model, user_id=other_user_id)
 
         grouped_message = get_messages_based_on_day(request.user, contact)
+
         
         context = {"contact":contact, "grouped_message":grouped_message.items()}
         return render(request, self.post_template, context)  
