@@ -28,11 +28,5 @@ class PrivateChatRoom(View):
 
         grouped_message = get_messages_based_on_day(request.user, contact)
         
-        for a, i in grouped_message.items():
-            print(a, "a")
-            for x in i:
-                print(x.content, "content")
-        
         context = {"contact":contact, "grouped_message":grouped_message.items()}
-
         return render(request, self.post_template, context)  

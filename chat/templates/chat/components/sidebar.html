@@ -114,7 +114,7 @@
                             <li class="contacts-item friends">
                                 <a class="contacts-link" hx-get="{% url 'private_chat_room' contact.user_id %}" hx-trigger="click" hx-target="#chat-section" hx-swap="outerHTML">
                                     <div class="avatar avatar-online">
-                                        <img src="./../../assets/media/avatar/2.png" alt="">
+                                        <img src="{{contact.profile_picture.url}}" alt="">
                                     </div>
                                     <div class="contacts-content">
                                         <div class="contacts-info">
