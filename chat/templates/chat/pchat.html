@@ -1,5 +1,5 @@
-
-<!-- Main Start -->
+{% load static %}
+{% load custom_filters  %}
 <main class="main main-visible" id="chat-section">
 
     <!-- Chats Page Start -->
@@ -283,15 +283,21 @@
                                                 {% endif %}
                                                     
                                                 
-                                                {% if message.file %}
+                                                {% if message.attachment.all %}
                                                     
                                                     
                                                     <div class="form-row">
-                                                        <div class="col">
-                                                            <a class="popup-media" href="{{message.file.url}}">
-                                                                <img class="img-fluid rounded" src="{{message.file.url}}" alt="">
-                                                            </a>
-                                                        </div>
+                                                        {% for attachment in message.attachment.all %}
+                                                            
+                                                            {% if attachment.file.name|is_image %}
+                                                                <div class="col">
+                                                                    <a class="popup-media" href="{{attachment.file.url}}">
+                                                                        <img class="img-fluid rounded" src="{{attachment.file.url}}" alt="">
+                                                                    </a>
+                                                                </div>
+                                                            {% endif %}
+                                                            
+                                                        {% endfor %}
                                                     </div>
 
                                                 {% endif %}
@@ -373,19 +379,21 @@
                                             <div class="message-content">
                                                 
                                                 {% if message.content %}
-                                                    <h6>{{message.content}}</h6>
+                                                    <h6>{{message.content}} {{message.file}}</h6>
                                                 {% endif %}
                                                     
                                                 
-                                                {% if message.file %}
+                                                {% if message.attachment.all %}
                                                     
                                                     
                                                     <div class="form-row">
-                                                        <div class="col">
-                                                            <a class="popup-media" href="{{message.file.url}}">
-                                                                <img class="img-fluid rounded" src="{{message.file.url}}" alt="">
-                                                            </a>
-                                                        </div>
+                                                        {% for attachment in message.attachment.all %}
+                                                            <div class="col">
+                                                                <a class="popup-media" href="{{attachment.file.url}}">
+                                                                    <img class="img-fluid rounded" src="{{attachment.file.url}}" alt="">
+                                                                </a>
+                                                            </div>
+                                                        {% endfor %}
                                                     </div>
 
                                                 {% endif %}
@@ -1690,7 +1698,11 @@
         </div>
     </div>
     <!-- Profile Settings End -->
+    
 
 </main>
-<!-- Main End -->
+    
 
+
+
+<script src="{% static 'js/app.js' %} "></script>

@@ -24,6 +24,8 @@ class PrivateChatRoom(View):
 
     def get(self, request, other_user_id):
         contact_model = self.contacts_model
+        message_model = self.messages_model
+
         contact = get_object_or_404(contact_model, user_id=other_user_id)
 
         grouped_message = get_messages_based_on_day(request.user, contact)
