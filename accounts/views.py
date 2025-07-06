@@ -6,6 +6,7 @@ from . import services
 from . import signup_storage
 import logging
 from django.db import IntegrityError
+from .serializers import StarterSignupSerializer
 
 
 # Create your views here.
@@ -14,23 +15,18 @@ logger = logging.getLogger(__name__)
 
 class SignUpView(APIView):
     def post(self, request):
-        first_name = request.data.get("first_name")
-        last_name = request.data.get("last_name")
-        bio = request.data.get("bio")
-        username = request.data.get("username")
-        password = request.data.get("password")
-        email = request.data.get("email")
-        avatar = request.data.get("avatar")
-
-        #insure email or username is unique
-
-        try:
-            email_user_uniqueness = services.insure_uniqueness(email, username)            
-            if not email_user_uniqueness:
-                return Response({"message":"A user has been created with this email/username"}, status=400)
-        except Exception as e:
-                return Response({"message":"An error occured"}, status=400)
-
+        serializer = StarterSignupSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
+        
+        data = serializer.validated_data
+        first_name = data.get("first_name", "")
+        last_name = data.get("last_name", "")
+        bio = data.get("bio", "")
+        username = data["username"]
+        password = data["password"]
+        email = data["email"]
+        avatar = data.get("avatar", "")
 
         # generate otp
         try:

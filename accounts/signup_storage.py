@@ -6,7 +6,7 @@ from datetime import datetime
 STORAGE_PATH = os.path.join("signup_data")
 DEBUG = True #TODO: get this from .env file
 
-def save_signup_data(username, password, email, secret_base32, first_name, last_name, bio, avatar):
+def save_signup_data(username, password, email, secret_base32, avatar, first_name=None, last_name=None, bio=None):
     if DEBUG:
         try:
             with shelve.open(STORAGE_PATH) as db:

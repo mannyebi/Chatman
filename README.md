@@ -9,7 +9,9 @@
 
     [x] Catch unique constraint for username and email at the first registration function.
 
-    [ ] Adding serializers.
+    [X] Adding serializers.
+
+    [ ] fix avatar bugs
 
     [ ] Otp Invalid bug.
 
