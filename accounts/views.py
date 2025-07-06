@@ -1,138 +1,89 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status, permissions
-from rest_framework.authtoken.models import Token
-from django.core.exceptions import ValidationError
-from .serializers import UserRegisterSerializer, UserLoginSerializer
-from .services import create_user, authenticate_user
-from django.contrib.auth import login, logout
+from rest_framework import status
+from . import services
+from . import signup_storage
+import logging
+from django.db import IntegrityError
+
 
 # Create your views here.
-class RegisterView(APIView):
-    """
-    API view for user registration.
-    Handles user registration and returns authentication token.
-    """
-    serializer_class = UserRegisterSerializer
-    permission_classes = [permissions.AllowAny]
 
+logger = logging.getLogger(__name__)
+
+class SignUpView(APIView):
     def post(self, request):
-        """
-        Handle POST request for user registration.
-        
-        Args:
-            request: The HTTP request object
-            
-        Returns:
-            Response: JSON response containing user data and authentication token
-        """
-        serializer = self.serializer_class(data=request.data)
-        if not serializer.is_valid():
-            return Response(
-                {"status": "error", "errors": serializer.errors},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        first_name = request.data.get("first_name")
+        last_name = request.data.get("last_name")
+        bio = request.data.get("bio")
+        username = request.data.get("username")
+        password = request.data.get("password")
+        email = request.data.get("email")
+        avatar = request.data.get("avatar")
 
+        # generate otp
         try:
-            user = create_user(
-                username=serializer.validated_data['username'],
-                email=serializer.validated_data['email'],
-                password=serializer.validated_data['password'],
-                first_name=serializer.validated_data['first_name'],
-                last_name=serializer.validated_data['last_name']
-            )
-            token, _ = Token.objects.get_or_create(user=user)
+            users_secret_base32 = services.generate_random_base32()
+            otp = services.generate_otp(users_secret_base32)
+        except Exception as e:
+            print(f"log -> {e}")
+            return Response({"message":"An error occured"}, status=400)
 
-            return Response(
-                {
-                    "status": "success",
-                    "message": "User created successfully",
-                    "data": {
-                        "user": serializer.data,
-                        "token": token.key
-                    }
-                },
-                status=status.HTTP_201_CREATED
-            )
-        except ValidationError as e:
-            return Response(
-                {"status": "error", "message": str(e)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        #save otp
+        try:
+            signup_storage.save_signup_data(username=username, password=password, email=email, 
+            secret_base32=users_secret_base32, first_name=first_name, last_name=last_name, bio=bio, avatar=avatar)
+        except Exception as e:
+            print(f"error -> {e}")
+            return Response({"message":"An error occured"}, status=400)
+
+        # send otp email
+        try:
+            services.send_email(email, "OTP", otp)
+        except Exception as e:
+            print(f"error -> {e}")
+            return Response({"message":"An error occured"}, status=400)
+        
+        return Response({"message":"an email with verification code sent to your email"}, status=200)
+
+        
+
+class ValidateUsersOtp(APIView):
+    def post(self, request):
+        otp = request.data.get("otp")
+        email = request.data.get('email')
+
+        #get user's otp using its email
+        try:
+            user_data = signup_storage.get_signup_data(email) #get the user's data which is stored in previous function
+            if user_data["secret_base32"] is None:
+                return Response({"message":"no pending signup with this email"}, status=404)
+
+        except Exception as e:
+            logger.error(e)
+            return Response({"message":"An error occured"}, status=400)
     
-    def get(self, request):
-        """
-        Handle GET request for API welcome message.
-        
-        Args:
-            request: The HTTP request object
-            
-        Returns:
-            Response: JSON response containing welcome message
-        """
-        return Response(
-            {
-                "status": "success",
-                "message": "Welcome to the Chatman API"
-            },
-            status=status.HTTP_200_OK
-        )
 
-
-class LoginView(APIView):
-    """
-    API view for user login.
-    Handles user authentication and returns authentication token.
-    """
-    serializer_class = UserLoginSerializer
-    permission_classes = [permissions.AllowAny]
-
-    def post(self, request):
-        """
-        Handle POST request for user login.
-        
-        Args:
-            request: The HTTP request object
-            
-        Returns:
-            Response: JSON response containing authentication token
-        """
-        serializer = self.serializer_class(data=request.data)
-        if not serializer.is_valid():
-            return Response(
-                {"status": "error", "errors": serializer.errors},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        #validate otp
 
         try:
-            user = authenticate_user(
-                username=serializer.validated_data['username'],
-                password=serializer.validated_data['password']
-            )
-            token, _ = Token.objects.get_or_create(user=user)
-            
-            return Response(
-                {
-                    "status": "success",
-                    "message": "Login successful",
-                    "data": {"token": token.key}
-                },
-                status=status.HTTP_200_OK
-            )
-        except ValidationError as e:
-            return Response(
-                {"status": "error", "message": str(e)},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
+            validation = services.validate_otp(user_data["secret_base32"], otp)
 
-
-
-class TestPageJustForLoggedInUsers(APIView):
-    """
-    API view for testing authentication.
-    """
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get(self, request):
-        return Response({"message": f"hi {request.user.username}"}, status=status.HTTP_200_OK)    
+            if validation:
+                try:
+                    services.create_user(username=user_data["username"], email=email, password=user_data["password"], base32_secret=user_data["secret_base32"],
+                                         first_name=user_data["first_name"], last_name=user_data["last_name"], bio=user_data["bio"], profile_picture=user_data["avatar"])
+                except IntegrityError as exc:
+                    return Response({"message":"A user has been created with this email/username"}, status=400)
+                except Exception as e:
+                    logger.error(e)
+                    return Response({"message":"An error occured"}, status=400)
+                return Response({"message": "Account created!"}, status=201)
+            else:
+                print("base32", user_data["secret_base32"])
+                print("otp", otp)
+                return Response({"error": "Invalid OTP"}, status=400)
+        except Exception as e:
+            logger.error(e)
+            return Response({"message":"An error occured"}, status=400)

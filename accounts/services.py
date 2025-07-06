@@ -1,52 +1,62 @@
-from typing import Optional
-from django.contrib.auth.models import User
-from django.contrib.auth import authenticate
-from django.core.exceptions import ValidationError
+import pyotp
+from django.contrib.auth import get_user_model
+from django.db import IntegrityError
+import logging
 
-def create_user(
-    username: str,
-    email: str,
-    password: str,
-    first_name: str,
-    last_name: str
-) -> User:
-    """
-    Create a new user with the provided credentials.
-    
-    Args:
-        username: The username for the new user
-        email: The email address for the new user
-        password: The password for the new user
-        first_name: The first name of the user
-        last_name: The last name of the user
-        
-    Returns:
-        User: The newly created user object
-    """
 
-    user = User.objects.create_user(
-        username=username,
-        email=email,
-        password=password,
-        first_name=first_name,
-        last_name=last_name
-    )
-    return user
+User = get_user_model()
+logger = logging.getLogger(__name__)
 
-def authenticate_user(username: str, password: str) -> Optional[User]:
+
+def generate_random_base32():
+    """generate random base32 secret keys
     """
-    Authenticate a user with the provided credentials.
-    
-    Args:
-        username: The username to authenticate
-        password: The password to authenticate
-        
-    Returns:
-        Optional[User]: The authenticated user if successful, None otherwise
+    try:
+        return pyotp.random_base32()
+    except Exception as e:
+        print(f"log -> {e}")
+        raise
+
+
+def generate_otp(secret_base32):
+    """generate a time otp using user's base32 secret key
     """
-    user = authenticate(username=username, password=password)
-    if user is None:
-        raise ValidationError("Invalid credentials")
-    return user
+    try:
+        return pyotp.TOTP(secret_base32).now()
+    except Exception as e:
+        print(f"log -> {e}")
+        raise
+
+
+def validate_otp(secret_base32, otp):
+    """validate user's inputed otp using its base32 secret key 
+    """
+    try:
+        totp = pyotp.TOTP(secret_base32)
+        if totp.verify(otp):
+            return True
+        else:
+            print(totp.now(), "true otp") #just to check,TODO: remove later 
+            return False
+    except Exception as e:
+        logger.error(e)
+        raise
+
+
+def create_user(username:str,  email:str, password:str | None = None, **extra_fields):
+    """create a user record and return it.
+
+    """
+    try:
+        return User.objects.create_user(username=username, email=email, password=password, **extra_fields)
+    except IntegrityError:
+        raise
+    except Exception as e:
+        logger.exception("Unexpected error while creating user %s", username)
+        raise
+
+
+def send_email(email, sub, body):
+    print(f"email `{sub}` sent to  {email} : {body}")
 
 
