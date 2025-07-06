@@ -22,6 +22,16 @@ class SignUpView(APIView):
         email = request.data.get("email")
         avatar = request.data.get("avatar")
 
+        #insure email or username is unique
+
+        try:
+            email_user_uniqueness = services.insure_uniqueness(email, username)            
+            if not email_user_uniqueness:
+                return Response({"message":"A user has been created with this email/username"}, status=400)
+        except Exception as e:
+                return Response({"message":"An error occured"}, status=400)
+
+
         # generate otp
         try:
             users_secret_base32 = services.generate_random_base32()
@@ -30,7 +40,7 @@ class SignUpView(APIView):
             print(f"log -> {e}")
             return Response({"message":"An error occured"}, status=400)
 
-        #save otp
+        #save users data
         try:
             signup_storage.save_signup_data(username=username, password=password, email=email, 
             secret_base32=users_secret_base32, first_name=first_name, last_name=last_name, bio=bio, avatar=avatar)
@@ -47,7 +57,6 @@ class SignUpView(APIView):
         
         return Response({"message":"an email with verification code sent to your email"}, status=200)
 
-        
 
 class ValidateUsersOtp(APIView):
     def post(self, request):
@@ -73,7 +82,7 @@ class ValidateUsersOtp(APIView):
             if validation:
                 try:
                     services.create_user(username=user_data["username"], email=email, password=user_data["password"], base32_secret=user_data["secret_base32"],
-                                         first_name=user_data["first_name"], last_name=user_data["last_name"], bio=user_data["bio"], profile_picture=user_data["avatar"])
+                                        first_name=user_data["first_name"], last_name=user_data["last_name"], bio=user_data["bio"], profile_picture=user_data["avatar"])
                 except IntegrityError as exc:
                     return Response({"message":"A user has been created with this email/username"}, status=400)
                 except Exception as e:

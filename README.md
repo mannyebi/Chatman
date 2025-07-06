@@ -3,11 +3,13 @@
 
 ## TODO:
 ### Accounts:
-    [x] Signup functionality
+    [x] Signup functionality.
 
-    [x] OTP validation
+    [x] OTP validation.
 
-    [ ] Catch unique constraint for username and email at the first registration function
+    [x] Catch unique constraint for username and email at the first registration function.
 
-    [ ] Adding serializers
+    [ ] Adding serializers.
+
+    [ ] Otp Invalid bug.
 

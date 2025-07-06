@@ -43,6 +43,18 @@ def validate_otp(secret_base32, otp):
         raise
 
 
+
+def insure_uniqueness(email:str, username:str):
+    """return True if no user exists with this email and username, otherwise, return False. 
+    Warning: this function is not case sensetive
+    """
+    try:
+        return not User.objects.filter(email=email.lower()).exists() and not User.objects.filter(username=username.lower()).exists()
+    except Exception as e:
+        logger.error(f"error while checking user credential uniqueness -> {e}")
+
+
+
 def create_user(username:str,  email:str, password:str | None = None, **extra_fields):
     """create a user record and return it.
 
