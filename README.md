@@ -11,7 +11,5 @@
 
     [X] Adding serializers.
 
-    [ ] fix avatar bugs
-
-    [ ] Otp Invalid bug.
+    [ ] Otp Invalid bug(Im not sure when it happens, so I should work more on it).
 

@@ -13,3 +13,9 @@
 - I just solved the above problem.
 
 - I faced another problem, which is that some times, the emailed OTP is invalid, there must be a problem somewhere, so I'll go to catch it now.
+
+- I remove avatar uploading at the signup section, because it makes the flow complicated and it's not neccssary at all, we will add it later on upadting profile .
+
+- now I should try to find, why sometimes a wrong otp sends to user's email ? where this happens ? It looks like a hard thing to debug, because a lot of things are envloved.
+
+- it acts so wiered, I can not catch it, it works some times and it doesn't work some time, I'll just let it go for now.

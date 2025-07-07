@@ -36,7 +36,7 @@ def validate_otp(secret_base32, otp):
         if totp.verify(otp):
             return True
         else:
-            print(totp.now(), "true otp") #just to check,TODO: remove later 
+            print(totp.now(), f"true otp for -> {secret_base32}") #just to check,TODO: remove later 
             return False
     except Exception as e:
         logger.error(e)

@@ -6,10 +6,11 @@ from datetime import datetime
 STORAGE_PATH = os.path.join("signup_data")
 DEBUG = True #TODO: get this from .env file
 
-def save_signup_data(username, password, email, secret_base32, avatar, first_name=None, last_name=None, bio=None):
+def save_signup_data(username, password, email, secret_base32, first_name=None, last_name=None, bio=None):
     if DEBUG:
         try:
             with shelve.open(STORAGE_PATH) as db:
+                
                 db[email] = {
                     "secret_base32" : secret_base32,
                     "created_at" : datetime.now().isoformat(),
@@ -18,7 +19,6 @@ def save_signup_data(username, password, email, secret_base32, avatar, first_nam
                     "first_name" : first_name,
                     "last_name" : last_name,
                     "bio" : bio,
-                    "avatar" : avatar
                 }
         except Exception as e:
             print(f"log -> {e}")
