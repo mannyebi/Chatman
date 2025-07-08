@@ -25,3 +25,5 @@
 - now I should work on `forgot password` functionality. it should be sth which is related to email. for example a link or just an otp sends to an email. I think a link with short time expiriation is more user friendly. I'll generate a UID for each user that asks for refreshin password. that UID should be expired after 5 minutes. a post request with `new password` and `confirm new password` should send in less than 5 minutes. and then user's password will refresh and it would send in response. I will create a model for UIDs contains User, UID and expiration time.
 
 - so I wrote one of its views, which creats UID, and email it user.
+
+- now I should validate its UID, by checking its expiration time, and UID content validation. if it was valid, I'll set new password for the user.

@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 import logging
 from accounts import models
+import uuid
 
 
 User = get_user_model()
@@ -78,4 +79,29 @@ def get_user_by_email(email):
         return User.objects.filter(email=email).first()
     except Exception as e:
         logger.error(f"an error occured while getting user based on its email -> {e}")
+        raise
+
+
+def validate_uid(uid):
+    """check uid validation by checking its existence, and its expiration time. return True if valid
+    """
+    try:
+        uid = uuid.UUID(uid)
+    except ValueError:
+        return False
+    try:
+        token = models.PasswordResetToken.objects.filter(uid=uid).first()
+    except Exception as e:
+        logger.error(f"an error occured while validation uid -> {e}")
+        raise
+    return token
+        
+
+def delete_uid(uid):
+    """delete UID.
+    """
+    try:
+        models.PasswordResetToken.objects.filter(uid=uid).delete()
+    except Exception as e:
+        logger.error(f"an error occured while deleting uid -> {e}")
         raise

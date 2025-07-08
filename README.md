@@ -17,4 +17,8 @@
 
     [x] start working on login, and learn about jwt token.
 
-    [ ] Work on reset password
+    [x] Work on reset password.
+
+    [ ] Work on update profile.
+
+    

@@ -6,7 +6,7 @@ from . import services
 from . import signup_storage
 import logging
 from django.db import IntegrityError
-from .serializers import StarterSignupSerializer
+from .serializers import StarterSignupSerializer, ResetPasswordConfirmSerializer
 from django.utils import timezone
 from accounts import models
 
@@ -101,6 +101,7 @@ class ValidateUsersOtp(APIView):
 
 
 class PasswordResetRequestView(APIView):
+
     def post(self, request):
         email = request.data.get("email")
 
@@ -114,7 +115,7 @@ class PasswordResetRequestView(APIView):
         #send email if user exists, and return 200 even if it doesn't exists, to prevent user enumeration
 
         if user:
-            expires_at = timezone.now()
+            expires_at = timezone.now() + timezone.timedelta(minutes=5)
             #generate token
             try:
                 token = models.PasswordResetToken.objects.create(user=user, expires_at=expires_at)
@@ -131,3 +132,27 @@ class PasswordResetRequestView(APIView):
                 return Response({"error":"couldn't send email"}, 400)
             
         return Response({"message":"If your email exists, you'll recieve a reset link."})
+    
+
+class PasswordResetConfirmView(APIView):
+
+    def post(self, request):
+        serializer = ResetPasswordConfirmSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = serializer.validated_data["user"]        
+        new_password = serializer.validated_data["new_password"]
+
+        try:
+            user.set_password(new_password)
+            user.save()
+        except Exception as e:
+            logger.error(f"an error occured while saving new password -> {e}")
+            return Response({"error":"an error occured while saving password"}, status=400)
+        
+        try:
+            services.delete_uid(serializer.validated_data["uid"])
+        except Exception as e: 
+            logger.error(f"An error occurred while deleting UID: {e}")
+
+        return Response({"message":"new password set successfuly"}, status=200)
