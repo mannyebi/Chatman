@@ -7,11 +7,17 @@ from . import signup_storage
 import logging
 from django.db import IntegrityError
 from .serializers import StarterSignupSerializer
+from django.utils import timezone
+from accounts import models
+
+
+
 
 
 # Create your views here.
 
 logger = logging.getLogger(__name__)
+frontend_domain = "https://test.com" #TODO: get this from .env later
 
 class SignUpView(APIView):
     def post(self, request):
@@ -92,3 +98,36 @@ class ValidateUsersOtp(APIView):
             return Response({"message": "Account created!"}, status=201)
         else:
             return Response({"error": "Invalid OTP"}, status=400)
+
+
+class PasswordResetRequestView(APIView):
+    def post(self, request):
+        email = request.data.get("email")
+
+        #get user by its email
+        try:
+            user = services.get_user_by_email(email)
+        except Exception as e:
+            logger.error(f"an error occured while getting user based on its email -> {e}")
+            return Response({"error":"an error occured while reseting password"}, status=400)
+        
+        #send email if user exists, and return 200 even if it doesn't exists, to prevent user enumeration
+
+        if user:
+            expires_at = timezone.now()
+            #generate token
+            try:
+                token = models.PasswordResetToken.objects.create(user=user, expires_at=expires_at)
+            except Exception as e:
+                logger.error(f"an error occured while creating PasswordResetToken record for {user} -> {e}")
+                return Response({"error":"an error occured while generating new reset password link "}, status=400)
+            
+            reset_link = f"{frontend_domain}/reset-password/{token.uid}"
+            #send link via email
+            try:
+                services.send_email(email=user.email, sub="Rest Password Link", body=token.uid)
+            except Exception as e:
+                logger.error(f"an error occured while emailing reset link to {user} -> {e} ")
+                return Response({"error":"couldn't send email"}, 400)
+            
+        return Response({"message":"If your email exists, you'll recieve a reset link."})

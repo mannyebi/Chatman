@@ -2,6 +2,7 @@ import pyotp
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 import logging
+from accounts import models
 
 
 User = get_user_model()
@@ -72,3 +73,9 @@ def send_email(email, sub, body):
     print(f"email `{sub}` sent to  {email} : {body}")
 
 
+def get_user_by_email(email):
+    try:
+        return User.objects.filter(email=email).first()
+    except Exception as e:
+        logger.error(f"an error occured while getting user based on its email -> {e}")
+        raise

@@ -19,3 +19,9 @@
 - now I should try to find, why sometimes a wrong otp sends to user's email ? where this happens ? It looks like a hard thing to debug, because a lot of things are envloved.
 
 - it acts so wiered, I can not catch it, it works some times and it doesn't work some time, I'll just let it go for now.
+
+- so I just realized that I don't need any login view, and I can generate login jwt tokens using `api/token/` endpoint.
+
+- now I should work on `forgot password` functionality. it should be sth which is related to email. for example a link or just an otp sends to an email. I think a link with short time expiriation is more user friendly. I'll generate a UID for each user that asks for refreshin password. that UID should be expired after 5 minutes. a post request with `new password` and `confirm new password` should send in less than 5 minutes. and then user's password will refresh and it would send in response. I will create a model for UIDs contains User, UID and expiration time.
+
+- so I wrote one of its views, which creats UID, and email it user.
