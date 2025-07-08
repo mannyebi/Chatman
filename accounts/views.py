@@ -1,17 +1,14 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from . import services
 from . import signup_storage
 import logging
 from django.db import IntegrityError
-from .serializers import StarterSignupSerializer, ResetPasswordConfirmSerializer
+from .serializers import StarterSignupSerializer, ResetPasswordConfirmSerializer, UpdateAccountSerializer
 from django.utils import timezone
 from accounts import models
-
-
-
 
 
 # Create your views here.
@@ -156,3 +153,21 @@ class PasswordResetConfirmView(APIView):
             logger.error(f"An error occurred while deleting UID: {e}")
 
         return Response({"message":"new password set successfuly"}, status=200)
+
+
+
+class UpadteAccountView(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request):
+
+        serializer = UpdateAccountSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            services.update_account(request.user, request.data)
+        except Exception as e:
+            logger.error(f"an error occured while upadting user's account -> {e}")
+            return Response({"error":"an error occured while updating account, please try again"}, status=400)
+
+
+        return Response({"message":"Account updated."}, status=200)

@@ -27,3 +27,5 @@
 - so I wrote one of its views, which creats UID, and email it user.
 
 - now I should validate its UID, by checking its expiration time, and UID content validation. if it was valid, I'll set new password for the user.
+
+- Update profile is a page that user can change this things : firstname, lastname, bio, avatar, (username, later).

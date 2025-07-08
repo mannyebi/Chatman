@@ -56,6 +56,15 @@ def insure_uniqueness(email:str, username:str):
         logger.error(f"error while checking user credential uniqueness -> {e}")
 
 
+def check_username_availability(username):
+    """return True if this username does not belongs to anyone
+    """
+    try:
+        return User.objects.filter(username=username).exists()
+    except Exception as e:
+        logger.error(f"an error occured while checking username availabilty -> {e}")
+        raise
+
 
 def create_user(username:str,  email:str, password:str | None = None, **extra_fields):
     """create a user record and return it.
@@ -105,3 +114,21 @@ def delete_uid(uid):
     except Exception as e:
         logger.error(f"an error occured while deleting uid -> {e}")
         raise
+
+
+def update_account(user, data):
+    """update user account fields that are present in data.
+    """
+    updateable_fields = ["first_name", "last_name", "bio", "username", "profile_picture"]
+
+    try:
+        for field in updateable_fields:
+            value = data.get(field, None)
+            if value not in [None, ""]:
+                setattr(user, field, value) # user.field = value
+        user.save()
+    except Exception as e:
+        logger.error(f"an error occured while updating account -> {e}")
+        raise
+    return user
+    

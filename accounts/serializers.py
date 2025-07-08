@@ -11,7 +11,6 @@ class StarterSignupSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=150)
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
-    avatar = serializers.ImageField(required=False, allow_null=True)
 
     def validate(self, attrs):
         username = attrs.get("username")
@@ -46,4 +45,19 @@ class ResetPasswordConfirmSerializer(serializers.Serializer):
             raise serializers.ValidationError("Passwords do not match.")
 
         attrs["user"] = token.user
+        return attrs
+
+
+
+class UpdateAccountSerializer(serializers.Serializer):
+    first_name = serializers.CharField(max_length=50, required=False, allow_blank=True)
+    last_name = serializers.CharField(max_length=50, required=False, allow_blank=True)
+    bio = serializers.CharField(max_length=500, required=False, allow_blank=True)
+    username = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    avatar = serializers.ImageField(required=False, allow_null=True)
+
+    def validate(self, attrs):
+        username = attrs.get("username")
+        if services.check_username_availability(username):
+            raise serializers.ValidationError("This username is not available.")
         return attrs

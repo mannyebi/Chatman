@@ -19,6 +19,4 @@
 
     [x] Work on reset password.
 
-    [ ] Work on update profile.
-
-    
+    [x] Work on update profile.
