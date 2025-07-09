@@ -54,7 +54,7 @@ class UpdateAccountSerializer(serializers.Serializer):
     last_name = serializers.CharField(max_length=50, required=False, allow_blank=True)
     bio = serializers.CharField(max_length=500, required=False, allow_blank=True)
     username = serializers.CharField(max_length=150, required=False, allow_blank=True)
-    avatar = serializers.ImageField(required=False, allow_null=True)
+    profile_picture = serializers.ImageField(required=False, allow_null=True)
 
     def validate(self, attrs):
         username = attrs.get("username")

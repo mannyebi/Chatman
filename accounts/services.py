@@ -4,7 +4,8 @@ from django.db import IntegrityError
 import logging
 from accounts import models
 import uuid
-
+from django.db import transaction
+from wallet.models import Wallet
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -66,17 +67,21 @@ def check_username_availability(username):
         raise
 
 
-def create_user(username:str,  email:str, password:str | None = None, **extra_fields):
-    """create a user record and return it.
+@transaction.atomic
+def create_user_with_wallet(username:str,  email:str, password:str | None = None, **extra_fields):
+    """create a user record and a wallet record for it, then return user.
 
     """
     try:
-        return User.objects.create_user(username=username, email=email, password=password, **extra_fields)
+        user=User.objects.create_user(username=username, email=email, password=password, **extra_fields)
+        Wallet.objects.create(user=user)
     except IntegrityError:
         raise
     except Exception as e:
         logger.exception("Unexpected error while creating user %s", username)
         raise
+
+    return user
 
 
 def send_email(email, sub, body):

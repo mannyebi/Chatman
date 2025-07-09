@@ -20,3 +20,7 @@
     [x] Work on reset password.
 
     [x] Work on update profile.
+
+    [x] work on Wallet model
+
+    [ ] work on money transmition between users (from user a to user b)

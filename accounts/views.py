@@ -85,7 +85,7 @@ class ValidateUsersOtp(APIView):
 
         if validation:
             try:
-                services.create_user(username=user_data["username"], email=email, password=user_data["password"], base32_secret=user_data["secret_base32"],
+                services.create_user_with_wallet(username=user_data["username"], email=email, password=user_data["password"], base32_secret=user_data["secret_base32"],
                                     first_name=user_data["first_name"], last_name=user_data["last_name"], bio=user_data["bio"])
             except IntegrityError as exc:
                 return Response({"message":"A user has been created with this email/username"}, status=400)
@@ -164,7 +164,7 @@ class UpadteAccountView(APIView):
         serializer.is_valid(raise_exception=True)
 
         try:
-            services.update_account(request.user, request.data)
+            services.update_account(request.user, serializer.validated_data)
         except Exception as e:
             logger.error(f"an error occured while upadting user's account -> {e}")
             return Response({"error":"an error occured while updating account, please try again"}, status=400)

@@ -29,3 +29,15 @@
 - now I should validate its UID, by checking its expiration time, and UID content validation. if it was valid, I'll set new password for the user.
 
 - Update profile is a page that user can change this things : firstname, lastname, bio, avatar, (username, later).
+
+- So I just add update account functionality, what else I should add in Accounts app ? signup, reset password, update account are done. probabbly thats enough for now, I'll just go to the other app, which is `Wallet`. and if another thing was required, I'll just add it to accoutns app.
+
+- Users should be able to store credit on this platform, they should also be able to transmit money to eachother. donate links should be available also.
+
+- I'll just start with creating The app.
+
+- now I'll create its first model which is `wallet` it has these fields : 1-User 2-Balance 3-udpated_at
+
+- I made the wallet, and an implementation for creating `wallet` record at the same time that the `user` record creats.
+
+- I found a bug in `UpadteAccountView` which I wasn't even using the validated data by serializer, this also fixed.
