@@ -41,3 +41,5 @@
 - I made the wallet, and an implementation for creating `wallet` record at the same time that the `user` record creats.
 
 - I found a bug in `UpadteAccountView` which I wasn't even using the validated data by serializer, this also fixed.
+
+- I added `Deposit` and `Transaction` but a little bit dirty. tomorrow will be cleanup day, try to cleanup the whole codes that you wrote.

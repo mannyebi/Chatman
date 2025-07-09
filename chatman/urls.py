@@ -25,7 +25,12 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+
+    #accounts:
     path('api/accounts/', include("accounts.urls")),
+
+    #wallet:
+    path('api/wallet/', include("wallet.urls")),
 
     #simple jwt requirements 
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),

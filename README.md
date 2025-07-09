@@ -11,9 +11,7 @@
 
     [X] Adding serializers.
 
-    [ ] Otp Invalid bug(Im not sure when it happens, so I should work more on it).
 
-    [ ] Code review for `SignUpView` and `ValidateUsersOtp`
 
     [x] start working on login, and learn about jwt token.
 
@@ -23,4 +21,14 @@
 
     [x] work on Wallet model
 
-    [ ] work on money transmition between users (from user a to user b)
+    [x] work on money transmition between users (from user a to user b)
+
+    [x] work on Deposit to wallet by admin
+
+    [ ] clean reset password tokens.
+
+    [ ] Otp Invalid bug(Im not sure when it happens, so I should work more on it).
+
+    [ ] Code review for `SignUpView` and `ValidateUsersOtp`
+
+    [ ] code review for `wallet` app
