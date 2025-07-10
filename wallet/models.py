@@ -1,6 +1,9 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from decimal import Decimal
+import uuid
+from django.utils import timezone
+
 
 User = get_user_model()
 
@@ -29,3 +32,17 @@ class Transaction(models.Model):
 
     def __str__(self):
         return f"{self.type.title()} of {self.amount} from {self.wallet.user.username}"
+    
+
+class DonateLink(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name="donation_links")
+    description = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expiration_minutes = models.PositiveIntegerField(null=True, blank=True)
+
+    def is_expired(self):
+        return timezone.now() > self.created_at + timezone.timedelta(minutes=self.expiration_minutes)
+    
+    def __str__(self):
+        return f"{self.receiver} - expires in : {self.expiration_minutes}"

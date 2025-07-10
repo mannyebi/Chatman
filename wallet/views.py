@@ -86,3 +86,24 @@ class TransferView(APIView):
         
         return Response({"message":"Money transferd successfuly "})
         
+
+
+class CreateDonateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = serializers.DonateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        reciever = request.user
+        expiration_minutes = data["expiration_minutes"]
+        description = data["description"]
+
+        try:
+            donate_link = services.create_donate_link(receiver=reciever, expiration_minutes=expiration_minutes, description=description)
+        except Exception as e :
+            logger.error(f"an error occured while creating donate link: {e}")
+            return Response({"error":"an error occured while creating donate link"}, status=500)
+        
+        return Response({"message":f"Donate link with id: `{donate_link}` created successfuly"}, status=201)

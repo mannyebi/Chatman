@@ -15,3 +15,6 @@ class TransferSerializer(serializers.Serializer):
     description = serializers.CharField(required=False, allow_blank=True, default="")
 
 
+class DonateSerializer(serializers.Serializer):
+    expiration_minutes = serializers.IntegerField(min_value=1)
+    description = serializers.CharField(required=False, allow_blank=True, default="")

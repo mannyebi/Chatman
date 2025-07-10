@@ -1,4 +1,4 @@
-from wallet.models import Wallet, Transaction
+from wallet.models import Wallet, Transaction, DonateLink
 from decimal import Decimal
 from django.db import transaction
 import logging
@@ -64,3 +64,14 @@ def get_wallet_by_user(user):
     except Exception as e:
         logger.error(f"an error occured while getting wallet by its user -> {e}")
         raise
+
+
+def create_donate_link(receiver, expiration_minutes, description=""):
+    """create a donate link
+    """
+    try:
+        donate_link = DonateLink.objects.create(receiver=receiver, expiration_minutes=expiration_minutes, description=description)
+    except Exception as e:
+        logger.error(f"an error occured while creating donate link: {e}")
+        raise
+    return donate_link.id
