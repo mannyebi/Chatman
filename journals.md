@@ -43,3 +43,7 @@
 - I found a bug in `UpadteAccountView` which I wasn't even using the validated data by serializer, this also fixed.
 
 - I added `Deposit` and `Transaction` but a little bit dirty. tomorrow will be cleanup day, try to cleanup the whole codes that you wrote.
+
+- I add a handler on serializers.py inside `accounts` app to delete expired tokens when user asks for confirm reset password. this is not enough, and I should use celery or cron later.
+
+- I refactored `DepositView` and `TransferView` .

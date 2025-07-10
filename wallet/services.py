@@ -13,7 +13,7 @@ def deposit(wallet: Wallet, amount: Decimal, description: str= ""):
     """
     try:
         wallet = Wallet.objects.select_for_update().get(pk=wallet.pk)
-        wallet.balance += Decimal(amount)
+        wallet.balance += amount
         wallet.save()
         logger.info(f"wallet: {wallet}, deposit {amount}, Saved")
         Transaction.objects.create(wallet=wallet, amount=amount, description=description, type="deposit")
@@ -47,15 +47,20 @@ def transfer(wallet:Wallet, to_wallet:Wallet, amount: Decimal, description: str=
 
 
 def get_user_by_username(username):
-    return User.objects.filter(username=username).first()
+    """return user instance by its username
+    """
+    try:
+        return User.objects.filter(username=username).first()
+    except Exception as e:
+        logger.error(f"an error occured while getting user by username -> {e}")
+        raise
 
 
 def get_wallet_by_user(user):
-    """return a wallet instance by username
+    """return a wallet instance by user's username.
     """
     try:
-        wallet = Wallet.objects.filter(user=user).first()
-        return wallet if wallet else None
+        return Wallet.objects.filter(user=user).first()
     except Exception as e:
         logger.error(f"an error occured while getting wallet by its user -> {e}")
         raise

@@ -5,12 +5,14 @@ from accounts import services
 User = get_user_model()
 
 class StarterSignupSerializer(serializers.Serializer):
-    first_name = serializers.CharField(max_length=50, required=False, allow_blank=True)
-    last_name = serializers.CharField(max_length=50, required=False, allow_blank=True)
-    bio = serializers.CharField(max_length=500, required=False, allow_blank=True)
-    username = serializers.CharField(max_length=150)
-    email = serializers.EmailField()
-    password = serializers.CharField(write_only=True)
+    username = serializers.CharField(max_length=150, required=True)
+    password = serializers.CharField(write_only=True, required=True)
+    email = serializers.EmailField(required=True)
+
+    first_name = serializers.CharField(max_length=50, required=False, allow_blank=True, default="")
+    last_name = serializers.CharField(max_length=50, required=False, allow_blank=True, default="")
+    bio = serializers.CharField(max_length=500, required=False, allow_blank=True, default="")
+    
 
     def validate(self, attrs):
         username = attrs.get("username")
@@ -20,6 +22,20 @@ class StarterSignupSerializer(serializers.Serializer):
 
         if not services.insure_uniqueness(email, username):
             raise serializers.ValidationError("A user with this email or username already exists.")
+        return attrs
+
+
+
+class CompleteSignupSerializer(serializers.Serializer):
+    otp = serializers.IntegerField(required=True)
+    email = serializers.EmailField(required=True)
+
+    def validate(self, attrs):
+        otp = str(attrs.get("otp"))
+
+        if len(otp) != 6:
+            raise serializers.ValidationError("Invalid OTP 2")
+        
         return attrs
 
 
@@ -39,6 +55,7 @@ class ResetPasswordConfirmSerializer(serializers.Serializer):
             raise serializers.ValidationError("Invalid UID.")
         
         if token.is_expired():
+            token.delete()
             raise serializers.ValidationError("Token has expired.")
 
         if new_password != confirm_password:

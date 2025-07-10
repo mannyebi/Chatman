@@ -25,10 +25,10 @@
 
     [x] work on Deposit to wallet by admin
 
-    [ ] clean reset password tokens.
+    [x] clean reset password tokens.
 
     [ ] Otp Invalid bug(Im not sure when it happens, so I should work more on it).
 
-    [ ] Code review for `SignUpView` and `ValidateUsersOtp`
+    [x] Code review for `SignUpView` and `ValidateUsersOtp`
 
-    [ ] code review for `wallet` app
+    [x] code review for `wallet` app

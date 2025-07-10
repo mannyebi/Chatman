@@ -6,7 +6,7 @@ from . import services
 from . import signup_storage
 import logging
 from django.db import IntegrityError
-from .serializers import StarterSignupSerializer, ResetPasswordConfirmSerializer, UpdateAccountSerializer
+from .serializers import StarterSignupSerializer, ResetPasswordConfirmSerializer, UpdateAccountSerializer, CompleteSignupSerializer
 from django.utils import timezone
 from accounts import models
 
@@ -18,17 +18,17 @@ frontend_domain = "https://test.com" #TODO: get this from .env later
 
 class SignUpView(APIView):
     def post(self, request):
+
         serializer = StarterSignupSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=400)
-        
+        serializer.is_valid(raise_exception=True)
+
         data = serializer.validated_data
-        first_name = data.get("first_name", "")
-        last_name = data.get("last_name", "")
-        bio = data.get("bio", "")
         username = data["username"]
         password = data["password"]
         email = data["email"]
+        first_name = data["first_name"]
+        last_name = data["last_name"]
+        bio = data["bio"]
 
         # generate otp
         try:
@@ -41,11 +41,15 @@ class SignUpView(APIView):
 
         #save users data
         try:
-            signup_storage.save_signup_data(username=username, password=password, email=email, 
-            secret_base32=users_secret_base32, first_name=first_name, last_name=last_name, bio=bio)
+            signup_storage.save_signup_data(
+            username=username, password=password,
+            email=email, secret_base32=users_secret_base32,
+            first_name=first_name, last_name=last_name,
+            bio=bio
+            )
         except Exception as e:
-            print(f"error -> {e}")
-            return Response({"message":"An error occured"}, status=400)
+            logger.error(f"an error occured while storing signup data -> {e}")
+            return Response({"message":"An error occured! Try again later."}, status=400)
 
         # send otp email
         try:
@@ -60,14 +64,26 @@ class SignUpView(APIView):
 
 class ValidateUsersOtp(APIView):
     def post(self, request):
-        otp = request.data.get("otp")
-        email = request.data.get('email')
+
+        serializer = CompleteSignupSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        data = serializer.validated_data
+        otp = data["otp"]
+        email = data["email"]
 
         #get user's otp using its email
         try:
             user_data = signup_storage.get_signup_data(email) #get the user's data which is stored in previous function
             if user_data is None:
                 return Response({"message":"no pending signup with this email"}, status=404)
+            
+            secret_base32 = user_data["secret_base32"]
+            username = user_data["username"]
+            password = user_data["password"]
+            first_name = user_data["first_name"]
+            last_name = user_data["last_name"]
+            bio = user_data["bio"]
 
         except Exception as e:
             logger.error(e)
@@ -75,19 +91,21 @@ class ValidateUsersOtp(APIView):
     
 
         #validate otp
-
         try:
-            validation = services.validate_otp(user_data["secret_base32"], otp)
-            logger.info(f"validation process for {email} is {validation} | secret : {user_data["secret_base32"]}")
+            validation = services.validate_otp(secret_base32, otp)
+            logger.info(f"validation process for {email} is {validation} | secret : {secret_base32}")
         except Exception as e:
             logger.error(f"error while validating otp -> {e}")
             return Response({"error":"an error occured while validating verfication code"}, status=400)
 
         if validation:
             try:
-                services.create_user_with_wallet(username=user_data["username"], email=email, password=user_data["password"], base32_secret=user_data["secret_base32"],
-                                    first_name=user_data["first_name"], last_name=user_data["last_name"], bio=user_data["bio"])
-            except IntegrityError as exc:
+                #create both user's record and its related wallet record.
+                services.create_user_with_wallet( 
+                username=username, email=email, 
+                password=password, base32_secret=secret_base32,
+                first_name=first_name, last_name=last_name, bio=bio)
+            except IntegrityError:
                 return Response({"message":"A user has been created with this email/username"}, status=400)
             except Exception as e:
                 logger.error(e)
@@ -120,7 +138,6 @@ class PasswordResetRequestView(APIView):
                 logger.error(f"an error occured while creating PasswordResetToken record for {user} -> {e}")
                 return Response({"error":"an error occured while generating new reset password link "}, status=400)
             
-            reset_link = f"{frontend_domain}/reset-password/{token.uid}"
             #send link via email
             try:
                 services.send_email(email=user.email, sub="Rest Password Link", body=token.uid)
@@ -153,7 +170,6 @@ class PasswordResetConfirmView(APIView):
             logger.error(f"An error occurred while deleting UID: {e}")
 
         return Response({"message":"new password set successfuly"}, status=200)
-
 
 
 class UpadteAccountView(APIView):
