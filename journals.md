@@ -48,4 +48,6 @@
 
 - I refactored `DepositView` and `TransferView` .
 
-- so what else should be in `wallet` application ? probably payment with crypto ? to deposit their wallet. also creating Donate links are required. Donate links are kind of the same thing as transfer. it just have a consistance sender and reciever and a expiration time. so we may create separate model and view for it, but we also use the transfer view too.
+- so what else should be in `wallet` application ? probably payment with crypto ? to deposit their wallet. also creating Donate links are required. Donate links are kind of the same thing as transfer. it just have a sender and reciever and a expiration time. so we may create separate model and view for it, but we also use the transfer view too.
+
+- the `Donate link` functionality is available now. users can go an create their own donate link. on the UI, it will be a modal which shows the reciever and the price which user choose to pay.

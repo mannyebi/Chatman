@@ -196,3 +196,7 @@ cython_debug/
 .pypirc
 
 media/
+
+signup_data.bak
+signup_data.dat
+signup_data.dir
