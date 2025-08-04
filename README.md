@@ -1,8 +1,9 @@
 # Chatman
 
-
 ## TODO:
+
 ### Accounts:
+
     [x] Signup functionality.
 
     [x] OTP validation.
@@ -10,8 +11,6 @@
     [x] Catch unique constraint for username and email at the first registration function.
 
     [X] Adding serializers.
-
-
 
     [x] start working on login, and learn about jwt token.
 
@@ -29,6 +28,10 @@
 
     [ ] Otp Invalid bug(Im not sure when it happens, so I should work more on it).
 
-    [x] Code review for `SignUpView` and `ValidateUsersOtp`
+    [x] Code review for`SignUpView` and `ValidateUsersOtp`
 
-    [x] code review for `wallet` app
+    [x] code review for`wallet` app
+
+    [x] start chat app, check the django-channels docs again, re-read about layer channels, asgi, ... .
+
+    [ ] Read about creating custome midlware for jwt for chat authentication.
