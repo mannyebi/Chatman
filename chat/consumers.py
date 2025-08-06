@@ -1,29 +1,14 @@
 # chat/consumers.py
 
-import json
-from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import AnonymousUser
-
+from .services import get_room, save_message
 from .models import Message, ChatRoom
+from channels.db import database_sync_to_async
+from chat import services
+
 
 User = get_user_model()
-
-# Asynchronous helpers for database operations
-@database_sync_to_async
-def get_room(room_name):
-    return ChatRoom.objects.get(name=room_name)
-
-@database_sync_to_async
-def get_message_history(room):
-    # Retrieve the last 50 messages from the room
-    messages = room.messages.order_by('-timestamp')[:50]
-    return list(messages.values('sender__username', 'content', 'timestamp'))
-
-@database_sync_to_async
-def save_message(room, user, content):
-    Message.objects.create(room=room, sender=user, content=content)
 
 
 class ChatConsumer(AsyncJsonWebsocketConsumer):
@@ -31,18 +16,29 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
         user = self.scope["user"]
 
+        #check if user is authenticated
         if user is None:
             print("user not authenticated")
             await self.close()
             return
         
+        
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = f"chat_{self.room_name}"
+
+
 
         try:
             self.room_obj = await get_room(self.room_name)
         except ChatRoom.DoesNotExist:
             print(f"Chat room {self.room_name} does not exists")
+            await self.close()
+            return
+        
+        #check if user is a participant of the chat room
+        is_participant = await services.is_participant(user, self.room_obj)
+        if not is_participant:
+            print("user is not a participant")
             await self.close()
             return
 
@@ -51,7 +47,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             self.channel_name,
         )
         await self.accept()
-        print(f"{user.first_name} connected successfuly to {self.room_name} | channel name -> {self.channel_name}")
+        print(f"{user.first_name} connected successfuly to {self.room_name}")
 
     async def disconnect(self, close_code):
         print(f"close code -> {close_code}")
@@ -68,6 +64,13 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         if user.is_authenticated:
             message = content.get("message")
             if message:
+                #check if user is a participant of the chat room
+                is_participant = await services.is_participant(user, self.room_obj)
+                if not is_participant:
+                    print("user is not a participant")
+                    await self.close()
+                    return
+                
                 await save_message(self.room_obj, user, message)
 
                 await self.channel_layer.group_send(

@@ -10,10 +10,17 @@ class ChatRoom(models.Model):
     Represents a chat room for grouping messages.
     """
     name = models.CharField(max_length=255, unique=True)
+    participants = models.ManyToManyField(User, related_name="chat_rooms")
+
+    @property
+    def participant_count(self):
+        """return the number of participants in a chat room
+        """
+        return self.participants.count()
 
     def __str__(self):
         return self.name
-
+    
 class Message(models.Model):
     room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name="messages")
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="messages")
