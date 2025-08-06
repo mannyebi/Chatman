@@ -10,11 +10,11 @@ django_asgi_app = get_asgi_application()
 # Now, it's safe to import app-specific code that relies on the app registry.
 from channels.routing import ProtocolTypeRouter, URLRouter
 from chat.routing import websocket_urlpatterns
-from chat.middleware import JWTAuthMiddlewareStack, MyOwnJwtMiddlewareStack
+from chat.middleware import JwtAuthnMiddlewareStack
 
 application = ProtocolTypeRouter({
     "http": django_asgi_app,
-    "websocket": MyOwnJwtMiddlewareStack(
+    "websocket": JwtAuthnMiddlewareStack(
         URLRouter(
             websocket_urlpatterns
         )

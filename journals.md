@@ -29,3 +29,14 @@
 - so what else should be in `wallet` application ? probably payment with crypto ? to deposit their wallet. also creating Donate links are required. Donate links are kind of the same thing as transfer. it just have a sender and reciever and a expiration time. so we may create separate model and view for it, but we also use the transfer view too.
 - the `Donate link` functionality is available now. users can go an create their own donate link. on the UI, it will be a modal which shows the reciever and the price which user choose to pay.
 - now Its time to start the `Chat` app. just dive deep into it.
+- so I just finished the whole chat functionality. I've grasped a greate understanding of websocket and its requirements.
+- I also learned about middlewares. I wrote one, it was a very fun experience. 
+- now I just need to add some endpoints, the one that Im sure is required for now is `creating-room-for-chat` .
+- after that I need to add a lot of features to the chat functionality, like sending files, images, musics, creating groups and so on.
+- also the `group` functionality requires some other features like admin, owner, different access levels.
+- the normal one-to-one chat is also required some other features, like blocking. 
+- I guess that `ChatRoom` model in the `chat` app requires to add one more field called `participents` . so just the ones that are a part of the group can join to its channel layer and recieve its messages (even if they are authenticated.)
+- base on all, these might be my new tasks for few days :
+  - [ ] add `participents` field to `ChatRoom` model in `chat` app, and implement its related functionality .
+  - [ ] learn and then implement about sending files, musics, images and so on.
+  - [ ] work on `group chat` functionality and its related rules.

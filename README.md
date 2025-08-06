@@ -34,4 +34,6 @@
 
     [x] start chat app, check the django-channels docs again, re-read about layer channels, asgi, ... .
 
-    [ ] Read about creating custome midlware for jwt for chat authentication.
+    [x] Read about creating custome midlware for jwt for chat authentication.
+
+    [x] Complete chatting functionality
