@@ -37,7 +37,7 @@
 - the normal one-to-one chat is also required some other features, like blocking. 
 - I guess that `ChatRoom` model in the `chat` app requires to add one more field called `participents` . so just the ones that are a part of the group can join to its channel layer and recieve its messages (even if they are authenticated.)
 - base on all, these might be my new tasks for few days :
-  - [ ] add `participents` field to `ChatRoom` model in `chat` app, and implement its related functionality. in both `connect` and `receieve_json` check if user a participant.
+  - [x] add `participents` field to `ChatRoom` model in `chat` app, and implement its related functionality. in both `connect` and `receieve_json` check if user a participant.
   - [ ] add rate limit to sending messages.
   - [ ] learn and then implement about sending files, musics, images and so on.
   - [ ] work on `group chat` functionality and its related rules.

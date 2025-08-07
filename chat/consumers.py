@@ -2,7 +2,7 @@
 
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.contrib.auth import get_user_model
-from .services import get_room, save_message
+from .services import get_room, save_message, is_throttled
 from .models import Message, ChatRoom
 from channels.db import database_sync_to_async
 from chat import services
@@ -22,11 +22,8 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             await self.close()
             return
         
-        
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = f"chat_{self.room_name}"
-
-
 
         try:
             self.room_obj = await get_room(self.room_name)
@@ -69,6 +66,17 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 if not is_participant:
                     print("user is not a participant")
                     await self.close()
+                    return
+                
+                #throttle check
+                print(is_throttled(user), "--------------")
+                is_user_throttled, next_try = is_throttled(user)
+                if is_user_throttled:
+
+                    await self.send_json({
+                        "error" : f"Rate limit exceeded. Try again in {next_try} seconds",
+                        "next_try" : next_try
+                    })
                     return
                 
                 await save_message(self.room_obj, user, message)

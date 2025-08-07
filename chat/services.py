@@ -1,6 +1,7 @@
 from channels.db import database_sync_to_async
-from django.contrib.auth.models import AnonymousUser
 from .models import Message, ChatRoom
+from django.core.cache import cache
+import time
 
 
 # Asynchronous helpers for database operations
@@ -24,3 +25,27 @@ def is_participant(user, room):
         return true if the user is a participant, False otherwise.  
     """
     return room.participants.filter(pk=f"{user.id}").exists()
+
+
+def is_throttled(user, window=30, limit=2):
+    """return True, if user has been sent more message
+
+    user: User obj.
+    window : the time range in seconds.
+    limit : the maximum allowed message.
+    """
+    user_key = f"chat_throttle_{user.id}"
+
+    timestamps = cache.get(user_key, []) #get previous stored timestamps
+    now = time.time()
+
+    #filter expired (more than `window`) timestamps
+    timestamps = [ts for ts in timestamps if now - ts < window]
+
+    if len(timestamps) > limit:
+        try_again_in = window - (now - timestamps[-1]) if timestamps else window
+        return True, try_again_in
+    
+    timestamps.append(now)
+    cache.set(user_key, timestamps, timeout=window)
+    return False, 0
