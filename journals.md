@@ -41,3 +41,19 @@
   - [x] add rate limit to sending messages.
   - [ ] learn and then implement about sending files, musics, images and so on.
   - [ ] work on `group chat` functionality and its related rules.
+
+- it seems like I should get the file byte from client (front end should recieve the main file, convert it to bytes, and the send it to backend), then convert that bytes content into a file with its true extension. then save that file in an appropriate directory inside `media` folder.
+
+- I just created its model, now I should handle media configurations.
+
+- I did it.
+
+- So now I should start recieving the json from websocket and make the consumer ready to accept it.
+
+- as I see, I need to add some error handling to project.
+
+- WHHHHAT A HARD TASK, I finally found a way to add the upload file/files feature, and implent a part of it. this is the flow : Files should be upload on the server by and http endpoing, and after that, the pk of the uploaded file will return. then the frontend send it to backend, backend will recieve it and set that file/files in `Message` obj. I know it looks confusing, but its interesting.
+
+- tomorrow tasks : 
+  - [ ] add `file.message` handler
+  - [ ] add `Upload_File` http endpoint

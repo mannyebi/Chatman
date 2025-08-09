@@ -1,5 +1,5 @@
 from channels.db import database_sync_to_async
-from .models import Message, ChatRoom
+from .models import Message, ChatRoom, File
 from django.core.cache import cache
 import time
 
@@ -13,11 +13,26 @@ def get_room(room_name):
 def get_message_history(room):
     # Retrieve the last 50 messages from the room
     messages = room.messages.order_by('-timestamp')[:50]
-    return list(messages.values('sender__username', 'content', 'timestamp'))
+    return list(messages.values('sender__username', 'text', 'timestamp'))
 
 @database_sync_to_async
-def save_message(room, user, content):
-    Message.objects.create(room=room, sender=user, content=content)
+def save_message(room, user, text="", file_pks=[]):
+    message = Message.objects.create(
+        room=room, 
+        sender=user, 
+        text=text 
+    )
+
+    if file_pks:
+        files_queryset = File.objects.filter(
+            pk__in=file_pks,
+            uploader = user
+        )
+        message.files.set(files_queryset)
+    return message
+
+
+
 
 @database_sync_to_async
 def is_participant(user, room):
@@ -27,7 +42,7 @@ def is_participant(user, room):
     return room.participants.filter(pk=f"{user.id}").exists()
 
 
-def is_throttled(user, window=30, limit=2):
+def is_throttled(user, window=60, limit=60):
     """return True, if user has been sent more message
 
     user: User obj.
