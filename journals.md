@@ -55,5 +55,16 @@
 - WHHHHAT A HARD TASK, I finally found a way to add the upload file/files feature, and implent a part of it. this is the flow : Files should be upload on the server by and http endpoing, and after that, the pk of the uploaded file will return. then the frontend send it to backend, backend will recieve it and set that file/files in `Message` obj. I know it looks confusing, but its interesting.
 
 - tomorrow tasks : 
-  - [ ] add `file.message` handler
-  - [ ] add `Upload_File` http endpoint
+  - [x] add `file.message` handler
+  - [x] add `Upload_File` http endpoint
+
+- I successfuly added upload file endpoint, and completed the `file.message` handler.
+
+- I am so happy that my chat functionality is almost complete 😍.
+- Now users should be able to send money through chat to each other 🔥. I really believe that this functionality is really cool.
+- also I should add `typing` handler, so if someone started typing, everyone in the chatroom can realize.
+- the other important thing is `creating group` functionality. this feature has even more features in it also. each group should has some settings also, like profile picture, bio, others can chat or not (if not, it would be a channel).
+- so tomorrow tasks will be :
+  - [ ] add `typing` handler.
+  - [ ] add `money transfering` functionality in chat.
+  - [ ] start learning a frontend technology.

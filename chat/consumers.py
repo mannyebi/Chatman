@@ -81,11 +81,15 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 text = content.get("text", None)
                 await self.handle_chat_message(user, text)
             elif type == "chat.media":
-                files_pk = content.get("files_pk", [])
+                file_pks = content.get("file_pks", [])
                 caption = content.get("caption", None)
-                await self.handle_chat_media(user, caption, files_pk)
+                await self.handle_chat_media(user, caption, file_pks)
             elif type == "file.message":
-                pass
+                print("me")
+                file_pks = content.get("file_pks", [])
+                await self.handle_file_message(user, file_pks)
+
+
         else:
             await self.send_json({"error":"Authentication required."})
             return
@@ -110,15 +114,15 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             }
         )
 
-    async def handle_chat_media(self, user, caption, files_pk):
-        if not caption or len(caption.strip()) == 0 or len(files_pk) == 0:
+    async def handle_chat_media(self, user, caption, file_pks):
+        if not caption or len(caption.strip()) == 0 or len(file_pks) == 0:
             await self.send_json({
                 "type" : "error",
                 "code" : 400,
                 "message" : "Message caption or file/files is/are missing or invalid."
             })
 
-        message = await services.save_message(self.room_obj, user, text=caption, file_pks=files_pk)
+        message = await services.save_message(self.room_obj, user, text=caption, file_pks=file_pks)
         files_data = [
             {
                 "url" : file_obj.file.url,
@@ -134,6 +138,32 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 "username" : user.username,
                 "files" : files_data,
                 "caption" : caption,
+            }
+        )
+
+    async def handle_file_message(self, user, file_pks):
+        print("called handle_file_message")
+        if not file_pks:
+            await self.send_json({
+                "type" : "error",
+                "code" : 400,
+                "message" : "file/files are missing or invalid."
+            })
+        message = await services.save_message(self.room_obj, user, file_pks=file_pks)
+        file_data = [
+            {
+                "url" : file_obj.file.url,
+                "filename" : file_obj.filename,
+                "file_type" : file_obj.content_type
+            } 
+            for file_obj in await database_sync_to_async(list)(message.files.all())
+        ]
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                "type" : "file.message",
+                "username" : user.username,
+                "files" : file_data
             }
         )
     
@@ -159,4 +189,12 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             "username": event["username"],
             "files": event["files"],
             "caption": event["caption"]
+        })
+
+    async def file_message(self, event):
+        print("called file_message")
+        await self.send_json({
+            "type" : "file.message",
+            "username" : event['username'],
+            "files" : event['files'],
         })

@@ -31,9 +31,6 @@ def save_message(room, user, text="", file_pks=[]):
         message.files.set(files_queryset)
     return message
 
-
-
-
 @database_sync_to_async
 def is_participant(user, room):
     """check if the give user is a participant of this chatroom.
@@ -64,3 +61,10 @@ def is_throttled(user, window=60, limit=60):
     timestamps.append(now)
     cache.set(user_key, timestamps, timeout=window)
     return False, 0
+
+def save_file(uploader, file, filename, content_type):
+    """save a file record in database with the given data
+    """
+    return File.objects.create(uploader=uploader, file=file, filename=filename, content_type=content_type)
+    
+    
