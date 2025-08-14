@@ -12,7 +12,12 @@ class ChatRoom(models.Model):
     Represents a chat room for grouping messages.
     """
     name = models.CharField(max_length=255, unique=True)
+    is_group = models.BooleanField(default=False)
     participants = models.ManyToManyField(User, related_name="chat_rooms")
+    bio = models.CharField(max_length=255, null=True, blank=True)
+    profile_picuter = models.ImageField(upload_to="chat_pics/", null=True, blank=True)
+    http_link = models.URLField(blank=True, null=True)
+    is_public = models.BooleanField(default=True)
 
     @property
     def participant_count(self):
@@ -21,6 +26,8 @@ class ChatRoom(models.Model):
         return self.participants.count()
 
     def __str__(self):
+        if self.is_group:
+            return f"Public group: {self.name} ({self.participant_count})" if self.is_public else f"Private group: {self.name} ({self.participant_count})"
         return self.name
     
 def message_file_path(instance, filename):

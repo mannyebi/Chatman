@@ -4,8 +4,14 @@ from rest_framework.response import Response
 from rest_framework import status
 from chat import services as chat_services
 from rest_framework.permissions import IsAuthenticated
+from django.shortcuts import get_object_or_404
+from django.contrib.auth import get_user_model
+from chat import models
 
 # Create your views here.
+
+User = get_user_model()
+
 
 class UploadFile(APIView):
     permission_classes = [IsAuthenticated]
@@ -29,3 +35,61 @@ class UploadFile(APIView):
             uploaded_file = chat_services.save_file(uploader=user, file=file, filename=file_names[index], content_type=content_type)
             upload_list.append(uploaded_file.pk)
         return Response({"message": f"{len(files)} files uploaded", "file_pks":upload_list}, status=status.HTTP_200_OK)
+
+
+class CreatePrivateChatRoom(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        #getting current user and the target user
+        sender = request.user
+        receiver_id = request.data.get("receiver_id")
+
+        if not receiver_id:
+            return Response({"error":"Receiver ID is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        receiver = get_object_or_404(User, id=receiver_id)
+
+        #Prevent a user from creating a chat with themselve
+        if sender == receiver:
+            return Response({"error":"Cannot create a private chat with yourself."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        chat, created = chat_services.get_or_create_private_chat(sender, receiver)
+
+        if created:
+            return Response({"chat_id":chat.id, "message":"Private chat has been created"}, status=status.HTTP_201_CREATED)
+        else:
+            return Response({"chat_id":chat.id, "message":"chat already exists"}, status=status.HTTP_200_OK)
+            
+
+class CreateGroupChatRoom(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        
+        group_creator = request.user
+        group_name = request.data.get("group_name")
+        participants_data = request.data.get("participants")
+
+        if not group_name:
+            return Response({"error": "Group name is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+        participant_ids = []
+
+        if participants_data:
+            participant_ids = [pid.strip() for pid in participants_data.split(',')]
+        participant_ids.append(str(group_creator.id))
+
+
+        participants = User.objects.filter(id__in=participant_ids)
+
+        if participants.count() != len(set(participant_ids)) :
+            return Response({"error": "One or more participants not found."}, status=status.HTTP_400_BAD_REQUEST)
+
+        chat, created = chat_services.get_or_create_group_chat(group_name=group_name, participants=list(participants))
+
+        if created:
+            return Response({"chat_id":chat.id, "message":"Group chat has been created"}, status=status.HTTP_201_CREATED)
+        else:
+            return Response({"chat_id":chat.id, "message":"Group already exists"}, status=status.HTTP_200_OK)

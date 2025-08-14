@@ -69,3 +69,8 @@
   - [x] add `money transfering` functionality in chat.
 
 - adding this transfer notification functionality was difficult to understand 😑. I decided to separate the `chat` websocket consumer from `Notifications` websocket consmer. that `notification` consumer is really look like a personal one-to-one way of communiation. when I transfer money to someone, it doesn't need to be connected to anyroom to recieve the message, because the client will be connect to the `notification` ws endpoint immediately after logging into the application.
+
+- next step is going to be creating this http endpoints :
+  - [x] creating private chat rooms endpoint
+  - [ ] creating group chat rooms endpoint
+  - [ ] handling groups 

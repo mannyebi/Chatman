@@ -2,6 +2,7 @@ from channels.db import database_sync_to_async
 from .models import Message, ChatRoom, File
 from django.core.cache import cache
 import time
+from django.db.models import Q
 
 
 # Asynchronous helpers for database operations
@@ -38,7 +39,6 @@ def is_participant(user, room):
     """
     return room.participants.filter(pk=f"{user.id}").exists()
 
-
 def is_throttled(user, window=60, limit=60):
     """return True, if user has been sent more message
 
@@ -67,4 +67,23 @@ def save_file(uploader, file, filename, content_type):
     """
     return File.objects.create(uploader=uploader, file=file, filename=filename, content_type=content_type)
     
+def get_or_create_private_chat(user1, user2):
+    user1_id = int(user1.id)
+    user2_id = int(user2.id)
+
+    name = f"pv_{max(user2_id, user1_id)}{min(user1_id,user2_id)}"
+    chat, created = ChatRoom.objects.filter(Q(is_group=False) & Q(name=name)).get_or_create(defaults={"is_group":False, "name":name})
+
+    if created:
+        chat.participants.add(user1, user2)
     
+    return chat, created
+    
+def get_or_create_group_chat(group_name, participants:list):
+    
+    chat, created = ChatRoom.objects.filter(Q(is_group=True) & Q(name=group_name)).get_or_create(defaults={"is_group":True, "name":group_name})
+
+    if created:
+        chat.participants.add(*participants)
+
+    return chat, created
