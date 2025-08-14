@@ -3,6 +3,8 @@ from decimal import Decimal
 from django.db import transaction
 import logging
 from django.contrib.auth import get_user_model
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -37,10 +39,10 @@ def transfer(wallet:Wallet, to_wallet:Wallet, amount: Decimal, description: str=
         from_wallet.balance -= amount
         to_wallet.balance += amount
 
-        from_wallet.save()
-        to_wallet.save()
+        from_wallet.save(update_fields=["balance"])
+        to_wallet.save(update_fields=["balance"])
 
-        Transaction.objects.create(wallet=from_wallet, to_wallet=to_wallet, type="transfer", amount=amount, description=description)
+        return Transaction.objects.create(wallet=from_wallet, to_wallet=to_wallet, type="transfer", amount=amount, description=description)
     except Exception as e:
         logger.error(f"an error occured while transfering from {wallet} to {to_wallet} -> {e}")
         raise
@@ -75,3 +77,24 @@ def create_donate_link(receiver, expiration_minutes, description=""):
         logger.error(f"an error occured while creating donate link: {e}")
         raise
     return donate_link.id
+
+
+def notifiy_transaction_in_ws(receiver, sender, transfer):
+    try:
+        channel_layer = get_channel_layer()
+        payload = {
+            "type" : "transfer.notification",
+            "data":{
+                "transfer_id" : transfer.id,
+                "sender_username" : sender.username,
+                "receiver_username" : receiver.username,
+                "amount" : str(transfer.amount),
+                "description" : transfer.description,
+                "created_at" : transfer.created_at.isoformat()
+            }
+        }
+        async_to_sync(channel_layer.group_send)(f"user_{receiver.id}", payload)
+        async_to_sync(channel_layer.group_send)(f"user_{sender.id}", payload)
+    except Exception as e:
+        logger.error(f"error in notifiy_transaction_in_ws: {e}")
+        raise

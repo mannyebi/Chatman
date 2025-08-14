@@ -14,6 +14,11 @@ class TransferSerializer(serializers.Serializer):
     amount = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=Decimal("0.01"))
     description = serializers.CharField(required=False, allow_blank=True, default="")
 
+    def validate_amount(self, v: Decimal):
+        if v <= 0:
+            raise serializers.ValidationError("Amount must be positive.")
+        return v
+
 
 class DonateSerializer(serializers.Serializer):
     expiration_minutes = serializers.IntegerField(min_value=1)

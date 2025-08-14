@@ -65,6 +65,7 @@
 - also I should add `typing` handler, so if someone started typing, everyone in the chatroom can realize.
 - the other important thing is `creating group` functionality. this feature has even more features in it also. each group should has some settings also, like profile picture, bio, others can chat or not (if not, it would be a channel).
 - so tomorrow tasks will be :
-  - [ ] add `typing` handler.
-  - [ ] add `money transfering` functionality in chat.
-  - [ ] start learning a frontend technology.
+  - [x] add `typing` handler.
+  - [x] add `money transfering` functionality in chat.
+
+- adding this transfer notification functionality was difficult to understand 😑. I decided to separate the `chat` websocket consumer from `Notifications` websocket consmer. that `notification` consumer is really look like a personal one-to-one way of communiation. when I transfer money to someone, it doesn't need to be connected to anyroom to recieve the message, because the client will be connect to the `notification` ws endpoint immediately after logging into the application.

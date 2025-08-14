@@ -14,7 +14,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         user = self.scope["user"]
 
         #check if user is authenticated
-        if user is None:
+        if not user:
             print("user not authenticated")
             await self.close()
             return
@@ -85,10 +85,10 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 caption = content.get("caption", None)
                 await self.handle_chat_media(user, caption, file_pks)
             elif type == "file.message":
-                print("me")
                 file_pks = content.get("file_pks", [])
                 await self.handle_file_message(user, file_pks)
-
+            elif type == "typing.status":
+                await self.handle_typing_status(user)
 
         else:
             await self.send_json({"error":"Authentication required."})
@@ -142,7 +142,6 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         )
 
     async def handle_file_message(self, user, file_pks):
-        print("called handle_file_message")
         if not file_pks:
             await self.send_json({
                 "type" : "error",
@@ -167,6 +166,14 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             }
         )
     
+    async def handle_typing_status(self, user):
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                "type" : "typing.status",
+                "username" : user.username 
+            }
+        )
 
     async def chat_message(self, event):
         """
@@ -192,9 +199,49 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         })
 
     async def file_message(self, event):
-        print("called file_message")
         await self.send_json({
             "type" : "file.message",
             "username" : event['username'],
             "files" : event['files'],
+        })
+
+    async def typing_status(self, event):
+        await self.send_json({
+            "type" : "typing.status",
+            "username" : event['username']
+        })
+
+
+
+
+class NotificationConsumer(AsyncJsonWebsocketConsumer):
+    async def connect(self):
+        user = self.scope["user"]
+
+        if not user:
+            print("user is not authenticated")
+            await self.close()
+            return
+        
+        self.user_group_name = f"user_{user.id}" #it is a private chatroom just for the user, to receive notifcations.
+        await self.channel_layer.group_add(
+            self.user_group_name,
+            self.channel_name
+        )
+
+        await self.accept()
+
+    async def disconnect(self, code):
+        user = self.scope['user']
+        if user and user.is_authenticated:
+            await self.channel_layer.group_discard(
+                self.user_group_name,
+                self.channel_name
+            )
+            print(f"{user.name} disconnected from {self.user_group_name}")
+
+    async def transfer_notification(self, event):
+        await self.send_json({
+            "type":"transfer_completed",
+            "payload": event["data"]
         })
