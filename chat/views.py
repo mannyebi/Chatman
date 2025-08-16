@@ -66,30 +66,40 @@ class CreateGroupChatRoom(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        
+            
         group_creator = request.user
-        group_name = request.data.get("group_name")
-        participants_data = request.data.get("participants")
+        group_name = request.data.get("group_name").strip()
+        group_display_name = request.data.get("group_display_name").strip()
+        participants_data = request.data.get("participants").strip()
 
         if not group_name:
             return Response({"error": "Group name is required."}, status=status.HTTP_400_BAD_REQUEST)
 
 
-        participant_ids = []
+        participant_ids = {str(group_creator.id)}
 
         if participants_data:
-            participant_ids = [pid.strip() for pid in participants_data.split(',')]
-        participant_ids.append(str(group_creator.id))
+            for pid_str in participants_data.split(','):
+                # Ensure the string is not empty or just whitespace before adding
+                stripped_pid = pid_str.strip()
+                if stripped_pid:
+                    participant_ids.add(stripped_pid)
+                    
+        participant_id_list = list(participant_ids)
 
 
-        participants = User.objects.filter(id__in=participant_ids)
+        try:
+            participants = User.objects.filter(id__in=participant_id_list)
+        except ValueError as ve:
+            return Response({"message":"the inputed users are not valid."}, status=status.HTTP_400_BAD_REQUEST)
 
-        if participants.count() != len(set(participant_ids)) :
+        if participants.count() != len(set(participant_id_list)) :
             return Response({"error": "One or more participants not found."}, status=status.HTTP_400_BAD_REQUEST)
 
-        chat, created = chat_services.get_or_create_group_chat(group_name=group_name, participants=list(participants))
+        chat, created = chat_services.get_or_create_group_chat(group_name=group_name, participants=list(participants), group_display_name=group_display_name)
+            
 
         if created:
-            return Response({"chat_id":chat.id, "message":"Group chat has been created"}, status=status.HTTP_201_CREATED)
+            return Response({"chat_id":chat.name, "message":"Group chat has been created"}, status=status.HTTP_201_CREATED)
         else:
-            return Response({"chat_id":chat.id, "message":"Group already exists"}, status=status.HTTP_200_OK)
+            return Response({"chat_id":chat.name, "message":"Group already exists"}, status=status.HTTP_200_OK)

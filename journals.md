@@ -72,5 +72,5 @@
 
 - next step is going to be creating this http endpoints :
   - [x] creating private chat rooms endpoint
-  - [ ] creating group chat rooms endpoint
+  - [x] creating group chat rooms endpoint
   - [ ] handling groups 

@@ -68,8 +68,12 @@ def save_file(uploader, file, filename, content_type):
     return File.objects.create(uploader=uploader, file=file, filename=filename, content_type=content_type)
     
 def get_or_create_private_chat(user1, user2):
-    user1_id = int(user1.id)
-    user2_id = int(user2.id)
+
+    try:
+        user1_id = int(user1.id)
+        user2_id = int(user2.id)
+    except ValueError as ve:
+        raise
 
     name = f"pv_{max(user2_id, user1_id)}{min(user1_id,user2_id)}"
     chat, created = ChatRoom.objects.filter(Q(is_group=False) & Q(name=name)).get_or_create(defaults={"is_group":False, "name":name})
@@ -79,9 +83,9 @@ def get_or_create_private_chat(user1, user2):
     
     return chat, created
     
-def get_or_create_group_chat(group_name, participants:list):
+def get_or_create_group_chat(group_name, participants:list, group_display_name=""):
     
-    chat, created = ChatRoom.objects.filter(Q(is_group=True) & Q(name=group_name)).get_or_create(defaults={"is_group":True, "name":group_name})
+    chat, created = ChatRoom.objects.filter(Q(is_group=True) & Q(name=group_name)).get_or_create(defaults={"is_group":True, "name":group_name, "display_name":group_display_name})
 
     if created:
         chat.participants.add(*participants)
