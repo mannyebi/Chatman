@@ -73,4 +73,9 @@
 - next step is going to be creating this http endpoints :
   - [x] creating private chat rooms endpoint
   - [x] creating group chat rooms endpoint
-  - [ ] handling groups 
+  - [ ] handling groups :
+    - the group owner, should be able to :
+      - add members later
+      - removing members
+      - promoting someone to admin
+      - admin have all owner's access, but it can't remove the owner.

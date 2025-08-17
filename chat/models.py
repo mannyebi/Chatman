@@ -14,11 +14,12 @@ class ChatRoom(models.Model):
     name = models.CharField(max_length=255, unique=True)
     display_name = models.CharField(max_length=255, null=True)
     is_group = models.BooleanField(default=False)
-    participants = models.ManyToManyField(User, related_name="chat_rooms")
+    participants = models.ManyToManyField(User, through="ChatMembership", related_name="chat_rooms")
     bio = models.CharField(max_length=255, null=True, blank=True)
     profile_picuter = models.ImageField(upload_to="chat_pics/", null=True, blank=True)
     http_link = models.URLField(blank=True, null=True)
     is_public = models.BooleanField(default=True)
+    
 
     @property
     def participant_count(self):
@@ -39,6 +40,23 @@ def message_file_path(instance, filename):
         datetime.now().strftime("%Y/%m"),
         filename
     )
+
+
+class ChatMembership(models.Model):
+    ROLE_CHOICES = [
+        ("owner", "owner"),
+        ("admin", "Admin"),
+        ("participant", "Participant"),
+    ]
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    chatroom = models.ForeignKey("ChatRoom", on_delete=models.CASCADE, related_name="memberships")
+    role = models.CharField(choices=ROLE_CHOICES, max_length=20, default="participant")
+
+    class Meta:
+        unique_together = ("user", "chatroom")
+
+    def __str__(self):
+        return f"{self.user.username} in {self.chatroom.name} ({self.role})"
 
 
 class File(models.Model):
