@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from .models import Message, ChatRoom
 from channels.db import database_sync_to_async
 from chat import services
-
+from datetime import datetime
 
 User = get_user_model()
 
@@ -104,12 +104,13 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             })
             return
 
-        await services.save_message(self.room_obj, user, text=text)
+        message_obj = await services.save_message(self.room_obj, user, text=text)
         await self.channel_layer.group_send(
             self.room_group_name,
             {
                 "type":"chat.message",
                 "username": user.username,
+                "message_pk": message_obj.id,
                 "text": text,
             }
         )
@@ -184,6 +185,8 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         await self.send_json({
             "type": "chat.message",
             "username": event["username"],
+            "timestamp": datetime.now().isoformat(),
+            "message_pk": event["message_pk"],
             "text": event["text"]
         })
 

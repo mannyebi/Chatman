@@ -73,9 +73,18 @@
 - next step is going to be creating this http endpoints :
   - [x] creating private chat rooms endpoint
   - [x] creating group chat rooms endpoint
-  - [ ] handling groups :
+  - [x] handling groups :
     - the group owner, should be able to :
       - add members later
       - removing members
       - promoting someone to admin
       - admin have all owner's access, but it can't remove the owner.
+- all this functionalities are added. but they may have some bugs, which I don't want to work on them for now. what else is required ???????? 
+- I think that could be enough for now. I am really excited to see this on frontend. maybe I need to start the frontend.
+- There is a few days that I am working on frontend.
+- for 1404/05/31 :
+  - sending request with `withCredentials: true` in axios gives this error :
+    - `
+    Access to XMLHttpRequest at 'http://127.0.0.1:8000/api/accounts/login/' from origin 'http://localhost:5173' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: The value of the 'Access-Control-Allow-Origin' header in the response must not be the wildcard '*' when the request's credentials mode is 'include'. The credentials mode of requests initiated by the XMLHttpRequest is controlled by the withCredentials attribute.
+    AuthContext.jsx:14  POST http://127.0.0.1:8000/api/accounts/login/ net::ERR_FAILED`
+- today is 1404/06/05 . I've worked sooo so much on frotn end . it is a super cool experience. now we can log in, sign up and chat with a beautiful (but not yet responsive for mobile 😂😂) user interface.

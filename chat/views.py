@@ -115,7 +115,7 @@ class HandleGroupChat(APIView):
         
         group_id = request.data.get("group_id")
         action = request.data.get("action")
-        removing_members = request.data.get("removing_members")
+        removing_members = request.data.get("removing_members") #TODO: complete this later.
         users = request.data.get("users")
         user = request.user
 
@@ -181,3 +181,21 @@ class HandleGroupChat(APIView):
             except Exception as e:
                 print(e)
                 return Response({"error":"an error occured."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class FetchChatroomMessages(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+
+        user = request.user
+        chatroom_name = request.data.get("chatroom_name")
+        print(chatroom_name)
+
+        #load messages based on timestamp in chatroom. also check if the `user` is a participant of the group.
+        #tip: do not use `select_related` and `prefetch_related` use normal unoptimized queries, so you can optimize it later, and calculate the optimization percentage. so you can dance on it ;)
+        #TODO: ensure that user is a participant of chatroom (later)
+        chatroom = get_object_or_404(ChatRoom, name=chatroom_name)
+        messages_queryset = chat_services.fetch_messages(chatroom, chunk=20)
+        messages = [{"username":message.sender.username, "text":message.text, "files":"non for now", "timestamp":message.timestamp} for message in messages_queryset]
+        return Response({"messages":messages}, status=status.HTTP_200_OK)

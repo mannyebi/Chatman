@@ -1,7 +1,10 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.serializers import TokenRefreshSerializer
+from rest_framework import status
 from . import services
 from . import signup_storage
 import logging
@@ -9,6 +12,9 @@ from django.db import IntegrityError
 from .serializers import StarterSignupSerializer, ResetPasswordConfirmSerializer, UpdateAccountSerializer, CompleteSignupSerializer
 from django.utils import timezone
 from accounts import models
+from rest_framework_simplejwt.exceptions import InvalidToken
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
+
 
 
 # Create your views here.
@@ -187,3 +193,43 @@ class UpadteAccountView(APIView):
 
 
         return Response({"message":"Account updated."}, status=200)
+
+
+
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+
+        token['username'] = user.username
+
+        return token
+    
+class MyTokenPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
+
+
+class LogoutView(APIView):
+    def post(self, request):
+        try:
+            refresh_token = request.COOKIES.get("refresh_token")
+            if refresh_token:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+        except Exception:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        
+        response = Response(status=status.HTTP_205_RESET_CONTENT)
+        response.delete_cookie("refresh_token")  # clear cookie
+        return response
+
+
+class UserMessage(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        return Response({"name":user.first_name, "last_name":user.last_name, "bio":user.bio})

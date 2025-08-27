@@ -80,6 +80,10 @@ class Message(models.Model):
     class Meta:
         ordering = ["timestamp"]
 
+        indexes = [ #this would help fetching messages based on the room, and timestamps
+        models.Index(fields=["room", "timestamp"]),
+    ]
+
     def __str__(self):
         if self.files.count() > 0:
             return f'{self.sender.username} sent {self.files.count()} files'

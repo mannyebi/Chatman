@@ -231,3 +231,13 @@ def handle_add_member(chat, user_ids):
     except Exception as e:
         print(e)
         raise
+
+
+def fetch_messages(chatroom, chunk=20):
+    """fetch `chunk` numbers of messages in `chatroom`
+    """
+    try:
+        return Message.objects.filter(room=chatroom).all().order_by('timestamp')[:chunk]
+    except Exception as e:
+        print(e)
+        raise
