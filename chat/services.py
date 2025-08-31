@@ -241,3 +241,28 @@ def fetch_messages(chatroom, chunk=20):
     except Exception as e:
         print(e)
         raise
+
+@database_sync_to_async
+def delete_message(id):
+    """delete message with pk = id
+    """
+    message = Message.objects.get(id=id)
+    try:
+        message.delete()
+    except Message.DoesNotExist as e:
+        print(e)
+        raise
+    except Exception as excep:
+        print(excep)
+        raise
+    
+
+
+def fetch_chat_list(user, chunk=20):
+    """return any chatroom which `user` is a participant in it
+    """
+    try:
+        return user.chat_rooms.all()
+    except Exception as e:
+        print(e)
+        raise

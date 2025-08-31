@@ -125,15 +125,17 @@ def update_account(user, data):
     """update user account fields that are present in data.
     """
     updateable_fields = ["first_name", "last_name", "bio", "username", "profile_picture"]
+    updated_fields = {}
 
     try:
         for field in updateable_fields:
             value = data.get(field, None)
             if value not in [None, ""]:
                 setattr(user, field, value) # user.field = value
+                updated_fields[field] = value
         user.save()
     except Exception as e:
         logger.error(f"an error occured while updating account -> {e}")
         raise
-    return user
+    return updated_fields
     

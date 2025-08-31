@@ -14,13 +14,13 @@ from django.utils import timezone
 from accounts import models
 from rest_framework_simplejwt.exceptions import InvalidToken
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
-
-
+from django.contrib.auth import get_user_model
 
 # Create your views here.
 
 logger = logging.getLogger(__name__)
 frontend_domain = "https://test.com" #TODO: get this from .env later
+User = get_user_model()
 
 class SignUpView(APIView):
     def post(self, request):
@@ -182,6 +182,8 @@ class UpadteAccountView(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request):
 
+        user = request.user
+
         serializer = UpdateAccountSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -191,8 +193,15 @@ class UpadteAccountView(APIView):
             logger.error(f"an error occured while upadting user's account -> {e}")
             return Response({"error":"an error occured while updating account, please try again"}, status=400)
 
+        user_profile = {
+            "first_name" : user.first_name,
+            "last_name" : user.last_name,
+            "bio" : user.bio,
+            "username" : user.username,
+            "profile_picture" : user.profile_picture
+        }
 
-        return Response({"message":"Account updated."}, status=200)
+        return Response(user_profile, status=200)
 
 
 
@@ -226,10 +235,18 @@ class LogoutView(APIView):
         response.delete_cookie("refresh_token")  # clear cookie
         return response
 
+    
 
-class UserMessage(APIView):
+class LoadProfile(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        # return : firstname, lastname, username, profile pic and biography
         user = request.user
-        return Response({"name":user.first_name, "last_name":user.last_name, "bio":user.bio})
+        return Response({
+        "first_name":user.first_name,
+        "last_name":user.last_name,
+        "bio":user.bio,
+        "email": user.email,
+        "username": user.username,
+        }, status=status.HTTP_200_OK)

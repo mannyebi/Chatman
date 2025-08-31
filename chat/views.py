@@ -190,12 +190,49 @@ class FetchChatroomMessages(APIView):
 
         user = request.user
         chatroom_name = request.data.get("chatroom_name")
+        #TODO: add count later
         print(chatroom_name)
 
         #load messages based on timestamp in chatroom. also check if the `user` is a participant of the group.
-        #tip: do not use `select_related` and `prefetch_related` use normal unoptimized queries, so you can optimize it later, and calculate the optimization percentage. so you can dance on it ;)
+        #tip: do not use `select_related` and `prefetch_related` use normal unoptimized queries, so you can optimize it later,chatroom_name and calculate the optimization percentage. so you can dance on it ;)
         #TODO: ensure that user is a participant of chatroom (later)
         chatroom = get_object_or_404(ChatRoom, name=chatroom_name)
-        messages_queryset = chat_services.fetch_messages(chatroom, chunk=20)
-        messages = [{"username":message.sender.username, "text":message.text, "files":"non for now", "timestamp":message.timestamp} for message in messages_queryset]
+        messages_queryset = chat_services.fetch_messages(chatroom, chunk=20000)
+        messages = [{"username":message.sender.username, "text":message.text, "files":"non for now", "timestamp":message.timestamp, "id":message.id} for message in messages_queryset]
         return Response({"messages":messages}, status=status.HTTP_200_OK)
+    
+
+class UserChatList(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        user = request.user
+        #TODO: add count later
+        chatlist_query = chat_services.fetch_chat_list(user)
+        chat_list = []
+        for chat in chatlist_query:
+            if chat.messages.last():
+                chat_list.append([{
+                "id":chat.id,
+                "name": chat.display_name,
+                "chatroom_name" : chat.name,
+                "lastMessage" : chat.messages.last().text,
+                "time" : chat.messages.last().timestamp,
+                "isGroup" : chat.is_group,
+                "avatar" : "🍆"
+            }])
+            else:
+                chat_list.append([{
+                "id":chat.id,
+                "name": chat.display_name,
+                "chatroom_name" : chat.name,
+                "lastMessage" : "",
+                "time" : "",
+                "isGroup" : chat.is_group,
+                "avatar" : "🍆"
+            }])
+
+        return Response({"chatList":chat_list}, status=status.HTTP_200_OK)
+
+        

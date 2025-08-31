@@ -33,7 +33,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField(max_length=50)
     bio = models.TextField(blank=True, null=True)
     base32_secret = models.CharField(max_length=32, null=True, blank=True)
-    profile_picture = models.ImageField(upload_to="profile_pics/", blank=True, null=True)
+    profile_picture = models.ImageField(upload_to="profile_pics/", default="profile_pics/default.png", blank=True, null=True)
     created_at = models.DateTimeField(default=timezone.now)
 
     is_active = models.BooleanField(default=True)

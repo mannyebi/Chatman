@@ -90,12 +90,16 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             elif type == "typing.status":
                 await self.handle_typing_status(user)
 
+            elif type == "delete.message":
+                #TODO: ensure the user can only delete a message from it self.
+                id = content.get("message_id", None)
+                await self.handle_message_delete(id)
+
         else:
             await self.send_json({"error":"Authentication required."})
             return
         
     async def handle_chat_message(self, user, text):
-        print("aa")
         if not text or len(text.strip()) == 0:
             await self.send_json({
                 "type" : "error",
@@ -110,7 +114,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             {
                 "type":"chat.message",
                 "username": user.username,
-                "message_pk": message_obj.id,
+                "id": message_obj.id,
                 "text": text,
             }
         )
@@ -176,6 +180,26 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             }
         )
 
+    async def handle_message_delete(self, id):
+        try:
+            await services.delete_message(id)
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    "type" : "delete.message",
+                    "message_id" : id
+                }
+            )
+        except Exception as e:
+            print(e)
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    "type" : "delete.message",
+                    "message_id" : None
+                }
+            )
+
     async def chat_message(self, event):
         """
         Handler for messages broadcasted to the group.
@@ -186,7 +210,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             "type": "chat.message",
             "username": event["username"],
             "timestamp": datetime.now().isoformat(),
-            "message_pk": event["message_pk"],
+            "id": event["id"],
             "text": event["text"]
         })
 
@@ -213,6 +237,13 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             "type" : "typing.status",
             "username" : event['username']
         })
+
+    async def delete_message(self, event):
+        await self.send_json({
+            "type" : "delete.message",
+            "message_id": event["message_id"]
+        })
+
 
 
 

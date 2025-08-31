@@ -37,8 +37,8 @@
 - the normal one-to-one chat is also required some other features, like blocking. 
 - I guess that `ChatRoom` model in the `chat` app requires to add one more field called `participents` . so just the ones that are a part of the group can join to its channel layer and recieve its messages (even if they are authenticated.)
 - base on all, these might be my new tasks for few days :
-  - [x] add `participents` field to `ChatRoom` model in `chat` app, and implement its related functionality. in both `connect` and `receieve_json` check if user a participant.
-  - [x] add rate limit to sending messages.
+  - [ ] add `participents` field to `ChatRoom` model in `chat` app, and implement its related functionality. in both `connect` and `receieve_json` check if user a participant.
+  - [ ] add rate limit to sending messages.
   - [ ] learn and then implement about sending files, musics, images and so on.
   - [ ] work on `group chat` functionality and its related rules.
 
@@ -55,8 +55,8 @@
 - WHHHHAT A HARD TASK, I finally found a way to add the upload file/files feature, and implent a part of it. this is the flow : Files should be upload on the server by and http endpoing, and after that, the pk of the uploaded file will return. then the frontend send it to backend, backend will recieve it and set that file/files in `Message` obj. I know it looks confusing, but its interesting.
 
 - tomorrow tasks : 
-  - [x] add `file.message` handler
-  - [x] add `Upload_File` http endpoint
+  - [ ] add `file.message` handler
+  - [ ] add `Upload_File` http endpoint
 
 - I successfuly added upload file endpoint, and completed the `file.message` handler.
 
@@ -65,15 +65,15 @@
 - also I should add `typing` handler, so if someone started typing, everyone in the chatroom can realize.
 - the other important thing is `creating group` functionality. this feature has even more features in it also. each group should has some settings also, like profile picture, bio, others can chat or not (if not, it would be a channel).
 - so tomorrow tasks will be :
-  - [x] add `typing` handler.
-  - [x] add `money transfering` functionality in chat.
+  - [ ] add `typing` handler.
+  - [ ] add `money transfering` functionality in chat.
 
 - adding this transfer notification functionality was difficult to understand 😑. I decided to separate the `chat` websocket consumer from `Notifications` websocket consmer. that `notification` consumer is really look like a personal one-to-one way of communiation. when I transfer money to someone, it doesn't need to be connected to anyroom to recieve the message, because the client will be connect to the `notification` ws endpoint immediately after logging into the application.
 
 - next step is going to be creating this http endpoints :
-  - [x] creating private chat rooms endpoint
-  - [x] creating group chat rooms endpoint
-  - [x] handling groups :
+  - [ ] creating private chat rooms endpoint
+  - [ ] creating group chat rooms endpoint
+  - [ ] handling groups :
     - the group owner, should be able to :
       - add members later
       - removing members
@@ -88,3 +88,19 @@
     Access to XMLHttpRequest at 'http://127.0.0.1:8000/api/accounts/login/' from origin 'http://localhost:5173' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: The value of the 'Access-Control-Allow-Origin' header in the response must not be the wildcard '*' when the request's credentials mode is 'include'. The credentials mode of requests initiated by the XMLHttpRequest is controlled by the withCredentials attribute.
     AuthContext.jsx:14  POST http://127.0.0.1:8000/api/accounts/login/ net::ERR_FAILED`
 - today is 1404/06/05 . I've worked sooo so much on frotn end . it is a super cool experience. now we can log in, sign up and chat with a beautiful (but not yet responsive for mobile 😂😂) user interface.
+- one of my major tasks in backend is to create a chat list for each user. in my opinion, chat list should contains :
+  1- every chatroom which user is a participant of it.
+  2- in telegram, you can also search a users id and find it. I want to implement a similar thing later.
+- so now currently I'll just develop an endpoint which returns every chatroom which `user` is a participant of it. here are the required fields :
+  `
+    id: 1,
+    name (display name): 'Family Group',
+    chatroom_name: 'pv_21',
+    lastMessage(filtered to 10 chars): 'See you tomorrow!',
+    time (the last message timestamp): '12:30',
+    unreadCount (this woul): 3, #TODO: implement this later
+    isGroup: true,
+    avatar: '👨‍👩‍👧‍👦'
+  `
+
+  - [ ] adding default profile picture
