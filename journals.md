@@ -103,4 +103,4 @@
     avatar: '👨‍👩‍👧‍👦'
   `
 
-  - [ ] adding default profile picture
+  - [x] adding default profile picture

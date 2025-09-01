@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
+from wallet.models import Transaction
 
 User = get_user_model()
 
@@ -24,7 +25,7 @@ def get_message_history(room):
     return list(messages.values('sender__username', 'text', 'timestamp'))
 
 @database_sync_to_async
-def save_message(room, user, text="", file_pks=[]):
+def save_message(room, user, text="", file_pks=[], transaction_id=None):
     message = Message.objects.create(
         room=room, 
         sender=user, 
@@ -37,6 +38,16 @@ def save_message(room, user, text="", file_pks=[]):
             uploader = user
         )
         message.files.set(files_queryset)
+
+    if transaction_id:
+        try:
+            transaction = get_object_or_404(Transaction, id=transaction_id)
+            message.transaction = transaction
+            message.save()
+        except Exception as e:
+            print(e)
+            raise
+
     return message
 
 @database_sync_to_async

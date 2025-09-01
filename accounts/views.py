@@ -1,9 +1,8 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from rest_framework_simplejwt.serializers import TokenRefreshSerializer
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework import status
 from . import services
 from . import signup_storage
@@ -12,9 +11,11 @@ from django.db import IntegrityError
 from .serializers import StarterSignupSerializer, ResetPasswordConfirmSerializer, UpdateAccountSerializer, CompleteSignupSerializer
 from django.utils import timezone
 from accounts import models
-from rest_framework_simplejwt.exceptions import InvalidToken
-from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
+from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
+from rest_framework.parsers import MultiPartParser, FormParser
+from django.shortcuts import get_object_or_404
+
 
 # Create your views here.
 
@@ -180,6 +181,8 @@ class PasswordResetConfirmView(APIView):
 
 class UpadteAccountView(APIView):
     permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser)
+
     def post(self, request):
 
         user = request.user
@@ -198,7 +201,7 @@ class UpadteAccountView(APIView):
             "last_name" : user.last_name,
             "bio" : user.bio,
             "username" : user.username,
-            "profile_picture" : user.profile_picture
+            "profile_picture" : user.profile_picture.url
         }
 
         return Response(user_profile, status=200)
@@ -241,12 +244,17 @@ class LoadProfile(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # return : firstname, lastname, username, profile pic and biography
-        user = request.user
+        """return user's profile information.
+
+        username: enter the user's username that you want its profile to fetch in url query.
+        """
+        username = self.request.query_params.get('username')
+        user = get_object_or_404(User, username=username)
+
         return Response({
         "first_name":user.first_name,
         "last_name":user.last_name,
         "bio":user.bio,
-        "email": user.email,
         "username": user.username,
+        "profile_picture": user.profile_picture.url,
         }, status=status.HTTP_200_OK)

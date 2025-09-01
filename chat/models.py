@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from datetime import datetime
 import os
+from wallet.models import Transaction
 
 User = get_user_model()
 
@@ -26,6 +27,26 @@ class ChatRoom(models.Model):
         """return the number of participants in a chat room
         """
         return self.participants.count()
+            
+    @property
+    def avatar(self):
+        return self.chatroom_name()[:1]
+
+    def chatroom_name(self, user=None):
+        if not self.is_group and user:
+            other_user = self.participants.exclude(id=user.id).first()
+            if other_user:
+                return f"{other_user.first_name} {other_user.last_name}".strip()
+            return "Unknown"
+        return self.display_name or "Unknown"
+    
+    def chat_profile_picture(self, user):
+        if not self.is_group:
+            other_user = self.participants.exclude(id=user.id).first()
+            if other_user:
+                return other_user.profile_picture.url
+
+
 
     def __str__(self):
         if self.is_group:
@@ -75,6 +96,7 @@ class Message(models.Model):
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="messages")
     text = models.TextField(null=True, blank=True)
     files = models.ManyToManyField(File, related_name="messages", blank=True, null=True)
+    transaction = models.ForeignKey(Transaction, on_delete=models.SET_NULL, related_name="transfer_notifications", null=True, blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:

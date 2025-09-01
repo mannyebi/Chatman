@@ -95,11 +95,22 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 id = content.get("message_id", None)
                 await self.handle_message_delete(id)
 
+            elif type == "transfer.notification":
+                print("hi i've called ")
+                transfer_id = content.get("transfer_id")
+                receiver_username = content.get("receiver_username")
+                amount = content.get("amount")
+                description = content.get("description")
+                created_at = content.get("created_at")
+                
+                await self.handle_transfer_notification(transfer_id, user.username, receiver_username, amount, description, created_at)
+
         else:
             await self.send_json({"error":"Authentication required."})
             return
         
     async def handle_chat_message(self, user, text):
+        
         if not text or len(text.strip()) == 0:
             await self.send_json({
                 "type" : "error",
@@ -200,6 +211,32 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 }
             )
 
+    async def handle_transfer_notification(self, transfer_id, sender_username, receiver_username, amount, description, created_at):
+        user = self.scope['user']
+        try:
+            message = await services.save_message(self.room_obj, user, text="", transaction_id=transfer_id)
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    "type" : "transfer.notification",
+                    "transfer_id" : transfer_id,
+                    "sender_username" : sender_username,
+                    "receiver_username" : receiver_username,
+                    "amount" : amount,
+                    "description" : description,
+                    "created_at" : created_at,
+                    "id" : message.id
+                }
+            )
+        except Exception as e:
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    "type" : "transfer.notification",
+                    "error" : f"{e}",
+                }
+            )
+
     async def chat_message(self, event):
         """
         Handler for messages broadcasted to the group.
@@ -244,38 +281,16 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             "message_id": event["message_id"]
         })
 
-
-
-
-
-class NotificationConsumer(AsyncJsonWebsocketConsumer):
-    async def connect(self):
-        user = self.scope["user"]
-
-        if not user:
-            print("user is not authenticated")
-            await self.close()
-            return
-        
-        self.user_group_name = f"user_{user.id}" #it is a private chatroom just for the user, to receive notifcations.
-        await self.channel_layer.group_add(
-            self.user_group_name,
-            self.channel_name
-        )
-
-        await self.accept()
-
-    async def disconnect(self, code):
-        user = self.scope['user']
-        if user and user.is_authenticated:
-            await self.channel_layer.group_discard(
-                self.user_group_name,
-                self.channel_name
-            )
-            print(f"{user.name} disconnected from {self.user_group_name}")
-
     async def transfer_notification(self, event):
+        print("callllled 1")
         await self.send_json({
-            "type":"transfer_completed",
-            "payload": event["data"]
+            "type" :"transfer.notification",
+            "username": event["sender_username"],
+            "transaction": {
+                "id": event["transfer_id"],
+                "amount":event["amount"]
+            },
+            "timestamp": event["created_at"],
+            "id": event['id']
         })
+    
