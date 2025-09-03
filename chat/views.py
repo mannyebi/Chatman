@@ -21,19 +21,17 @@ class UploadFile(APIView):
         user = request.user
         
         files = request.FILES.getlist("files")
-        content_type = request.POST.get("content_type")
-        file_names = request.data.get("file_name").split(",")
 
 
-        if not files or not content_type or not file_names:
-            return Response({"error":"bad request", "message": "one or more of the fields are missing."}, status=status.HTTP_400_BAD_REQUEST)
+        if not files :
+            return Response({"error":"bad request", "message": "no file choosed."}, status=status.HTTP_400_BAD_REQUEST)
 
         upload_list = []
 
-        for index, file in enumerate(files):
-            
-            uploaded_file = chat_services.save_file(uploader=user, file=file, filename=file_names[index], content_type=content_type)
-            upload_list.append(uploaded_file.pk)
+        for file in files:
+
+            uploaded_file = chat_services.save_file(uploader=user, file=file, filename=file.name, content_type=file.content_type)
+            upload_list.append({uploaded_file.pk:file.name})
         return Response({"message": f"{len(files)} files uploaded", "file_pks":upload_list}, status=status.HTTP_200_OK)
 
 
@@ -204,11 +202,24 @@ class FetchChatroomMessages(APIView):
                 messages.append({
                     "username":message.sender.username, 
                     "text":message.text, 
-                    "files":"non for now", 
+                    "files":[],
                     "transaction":{
                         "id":message.transaction.id or "",
-                        "amount":message.transaction.amount
+                        "amount":message.transaction.amount,
+                        "reciever" : message.transaction.to_wallet.user.username,
+                        "description" : message.transaction.description
                     },
+                    "timestamp":message.timestamp, 
+                    "id":message.id
+                })
+            elif message.files:
+                messages.append({
+                    "username":message.sender.username, 
+                    "text":message.text, 
+                    "files":[{
+                        "url" : m.file.url or "",
+                        "contentType" : m.content_type or ""
+                    } for m in message.files.all()], 
                     "timestamp":message.timestamp, 
                     "id":message.id
                 })
@@ -216,7 +227,7 @@ class FetchChatroomMessages(APIView):
                 messages.append({
                     "username":message.sender.username, 
                     "text":message.text, 
-                    "files":"non for now", 
+                    "files":[],
                     "timestamp":message.timestamp, 
                     "id":message.id
                 })
@@ -237,26 +248,25 @@ class UserChatList(APIView):
             if chat.messages.last():
                 chat_list.append([{
                 "id":chat.id,
-                "name": chat.chatroom_name(request.user),
+                "name": chat.chatroom_name(user),
                 "chatroom_name" : chat.name,
                 "lastMessage" : chat.messages.last().text,
                 "time" : chat.messages.last().timestamp,
                 "isGroup" : chat.is_group,
-                "profile_picture" : chat.chat_profile_picture(request.user),
+                "profile_picture" : chat.chat_profile_picture(user),
                 "avatar" : chat.avatar,
             }])
             else:
                 chat_list.append([{
                 "id":chat.id,
-                "name": chat.chatroom_name(request.user),
+                "name": chat.chatroom_name(user),
                 "chatroom_name" : chat.name,
                 "lastMessage" : "",
                 "time" : "",
                 "isGroup" : chat.is_group,
-                "profile_picture" : chat.chat_profile_picture(request.user),
+                "profile_picture" : chat.chat_profile_picture(user),
                 "avatar" : chat.avatar,
             }])
-        print(chat_list)
 
         return Response({"chatList":chat_list}, status=status.HTTP_200_OK)
 

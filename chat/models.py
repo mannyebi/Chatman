@@ -39,6 +39,15 @@ class ChatRoom(models.Model):
                 return f"{other_user.first_name} {other_user.last_name}".strip()
             return "Unknown"
         return self.display_name or "Unknown"
+        
+    def chatroom_username(self, user):
+        if not self.is_group:
+            other_user = self.participants.exclude(id=user.id).first()
+            if other_user :
+                return other_user.username
+            return ""
+
+            
     
     def chat_profile_picture(self, user):
         if not self.is_group:
@@ -83,7 +92,7 @@ class ChatMembership(models.Model):
 class File(models.Model):
     uploader = models.ForeignKey(User, on_delete=models.CASCADE, related_name="uploaded_files")
     file = models.FileField(upload_to=message_file_path)
-    filename = models.CharField(max_length=255)
+    filename = models.CharField(max_length=255, null=True, blank=True)
     content_type = models.CharField(max_length=255)
     timestamp = models.DateTimeField(auto_now_add=True)
 

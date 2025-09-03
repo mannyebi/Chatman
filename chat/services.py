@@ -80,7 +80,7 @@ def is_throttled(user, window=60, limit=60):
     cache.set(user_key, timestamps, timeout=window)
     return False, 0
 
-def save_file(uploader, file, filename, content_type):
+def save_file(uploader, file, content_type, filename):
     """save a file record in database with the given data
     """
     return File.objects.create(uploader=uploader, file=file, filename=filename, content_type=content_type)

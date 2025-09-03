@@ -88,16 +88,17 @@ class TransferView(APIView):
             logger.error(f"an error occured while transfering money -> {e}")
         
 
-        try:
-            services.notifiy_transaction_in_ws(receiver=receiver, sender=sender, transfer=transfer)
-            print("hi")
-        except Exception as e:
-            logger.warning(f"WS notify failed: {e}")
-
-
-        return Response({"message":"Money transferd successfuly."}, status=status.HTTP_200_OK)
+        return Response({
+            "message":"Money transferd successfuly.",
+            "transfer_id":transfer.id,
+            "sender_username": transfer.wallet.user.username,
+            "receiver_username": transfer.to_wallet.user.username,
+            "receiver_username": transfer.to_wallet.user.username,
+            "amount" : int(transfer.amount),
+            "description": transfer.description,
+            "timestamp" : transfer.created_at.isoformat()
+        }, status=status.HTTP_200_OK)
         
-
 
 class CreateDonateView(APIView):
     permission_classes = [IsAuthenticated]
@@ -118,3 +119,23 @@ class CreateDonateView(APIView):
             return Response({"error":"an error occured while creating donate link"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         return Response({"message":f"Donate link with id: `{donate_link}` created successfuly"}, status=status.HTTP_201_CREATED)
+    
+
+class FetchUserBalance(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        username = request.query_params.get('username')
+
+        if username:
+            try:
+                user = get_object_or_404(User_obj, username=username)
+                wallet = services.get_wallet_by_user(user=user)
+
+                return Response({"balance":f"{wallet.balance}"}, status=status.HTTP_200_OK)
+
+            except User_obj.DoesNotExist:
+                return Response({"error":"user not found"}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"error":"username field is required"}, status=status.HTTP_400_BAD_REQUEST)
+        

@@ -169,7 +169,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             {
                 "url" : file_obj.file.url,
                 "filename" : file_obj.filename,
-                "file_type" : file_obj.content_type
+                "file_type" : file_obj.content_type,
             } 
             for file_obj in await database_sync_to_async(list)(message.files.all())
         ]
@@ -178,7 +178,9 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             {
                 "type" : "file.message",
                 "username" : user.username,
-                "files" : file_data
+                "files" : file_data,
+                "timestamp" : message.timestamp.isoformat(),
+                "id" : message.id
             }
         )
     
@@ -267,6 +269,8 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             "type" : "file.message",
             "username" : event['username'],
             "files" : event['files'],
+            "timestamp" : event['timestamp'],
+            "id" : event['id']
         })
 
     async def typing_status(self, event):
