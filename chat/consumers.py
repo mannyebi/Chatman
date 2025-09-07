@@ -25,9 +25,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         try:
             self.room_obj = await services.get_room(self.room_name)
         except ChatRoom.DoesNotExist:
-            print(f"Chat room {self.room_name} does not exists")
-            await self.close()
-            return
+            self.room_obj = await services.create_private_chat_with_chatroom_name(self.room_name)
         
         #check if user is a participant of the chat room
         is_participant = await services.is_participant(user, self.room_obj)

@@ -100,6 +100,33 @@ def get_or_create_private_chat(user1, user2):
         chat.participants.add(user1, user2)
     
     return chat, created
+
+@database_sync_to_async
+def create_private_chat_with_chatroom_name(chatroomName):
+    """create private chatroom based on its name. extract users from its chatroom name.
+    """
+    try:
+        users_mixed_id = chatroomName.split("pv_")[1]
+        first_user_id = users_mixed_id[0]
+        second_user_id = users_mixed_id[1]
+
+        first_user = get_object_or_404(User, id=first_user_id)
+        second_user = get_object_or_404(User, id=second_user_id)
+
+        if first_user and first_user:
+            chatroom = ChatRoom.objects.create(
+                name=chatroomName,
+                is_group=False,
+            )
+            chatroom.participants.add(first_user, second_user)
+            return chatroom
+        
+        else:
+            raise ValueError("chatroom name is not correct")
+    except Exception as e:
+        print(e)
+        raise
+
     
 def get_or_create_group_chat(group_name, group_creator, participants:list, group_display_name=""):
     """

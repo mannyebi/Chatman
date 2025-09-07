@@ -8,13 +8,14 @@ from . import services
 from . import signup_storage
 import logging
 from django.db import IntegrityError
-from .serializers import StarterSignupSerializer, ResetPasswordConfirmSerializer, UpdateAccountSerializer, CompleteSignupSerializer
+from .serializers import StarterSignupSerializer, ResetPasswordConfirmSerializer, UpdateAccountSerializer, CompleteSignupSerializer, ResendOtpSerializer
 from django.utils import timezone
 from accounts import models
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.shortcuts import get_object_or_404
+from chatman.api_schman import api_response
 
 
 # Create your views here.
@@ -41,10 +42,10 @@ class SignUpView(APIView):
         try:
             users_secret_base32 = services.generate_random_base32()
             otp = services.generate_otp(users_secret_base32)
-            logger.info(f"OTP generated for {email}. otp is : {otp} | secret : {users_secret_base32}")
+            
         except Exception as e:
             logger.error(f"an error occured while generating otp -> {e}")
-            return Response({"message":"An error occured"}, status=400)
+            return api_response(Status=status.HTTP_500_INTERNAL_SERVER_ERROR, success=False, data={}, message="", error="an internal error occured. try again later .")
 
         #save users data
         try:
@@ -56,15 +57,17 @@ class SignUpView(APIView):
             )
         except Exception as e:
             logger.error(f"an error occured while storing signup data -> {e}")
-            return Response({"message":"An error occured! Try again later."}, status=400)
+            return api_response(Status=status.HTTP_500_INTERNAL_SERVER_ERROR, success=False, data={}, message="", error="an internal error occured while signing you up. try again later.")
 
         # send otp email
         try:
+            
             services.send_email(email, "OTP", otp)
             logger.info(f"otp sent to {email} | {otp}")
+
         except Exception as e:
-            logger.error(f"an error occured while sending otp to user -> {e}")
-            return Response({"message":"An error occured"}, status=400)
+            logger.error(f"an error occured while sending otp email to user -> {e}")
+            return api_response(Status=status.HTTP_500_INTERNAL_SERVER_ERROR, success=False, data={}, message="", error="an internal error occured while sending email. try again later.")
         
         return Response({"message":"an email with verification code sent to your email"}, status=200)
 
@@ -83,7 +86,7 @@ class ValidateUsersOtp(APIView):
         try:
             user_data = signup_storage.get_signup_data(email) #get the user's data which is stored in previous function
             if user_data is None:
-                return Response({"message":"no pending signup with this email"}, status=404)
+                return api_response(Status=status.HTTP_401_UNAUTHORIZED, success=False, data={}, message="", error="no pending signup with this email")
             
             secret_base32 = user_data["secret_base32"]
             username = user_data["username"]
@@ -94,7 +97,7 @@ class ValidateUsersOtp(APIView):
 
         except Exception as e:
             logger.error(e)
-            return Response({"message":"An error occured while reading sign up data"}, status=400)
+            return api_response(Status=status.HTTP_500_INTERNAL_SERVER_ERROR, success=False, data={}, message="", error="an error occured, try again in 5 minutes")
     
 
         #validate otp
@@ -103,7 +106,7 @@ class ValidateUsersOtp(APIView):
             logger.info(f"validation process for {email} is {validation} | secret : {secret_base32}")
         except Exception as e:
             logger.error(f"error while validating otp -> {e}")
-            return Response({"error":"an error occured while validating verfication code"}, status=400)
+            return api_response(Status=status.HTTP_500_INTERNAL_SERVER_ERROR, success=False, data={}, message="", error="error while validating OTP code. try again in 5 minutes")
 
         if validation:
             try:
@@ -113,13 +116,58 @@ class ValidateUsersOtp(APIView):
                 password=password, base32_secret=secret_base32,
                 first_name=first_name, last_name=last_name, bio=bio)
             except IntegrityError:
-                return Response({"message":"A user has been created with this email/username"}, status=400)
+                return api_response(Status=status.HTTP_409_CONFLICT, success=False, data={}, message="", error="this email/username has been used by another user.")
             except Exception as e:
                 logger.error(e)
-                return Response({"message":"An error occured while creating user's record "}, status=400)
-            return Response({"message": "Account created!"}, status=201)
+                return api_response(Status=status.HTTP_500_INTERNAL_SERVER_ERROR, success=False, data={}, message="", error="An error occured while creating user's record")
+            return api_response(Status=status.HTTP_201_CREATED, success=True, data={}, message="Account created", error="")
         else:
-            return Response({"error": "Invalid OTP"}, status=400)
+            return api_response(Status=status.HTTP_401_UNAUTHORIZED, success=False, data={}, message="", error="Invalid OTP")
+
+
+class ResendOtpEmail(APIView):
+
+    def post(self, request):
+
+        serializer = ResendOtpSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        data = serializer.validated_data
+        email = data["email"]
+
+        #get user's otp using its email
+        try:
+            user_data = signup_storage.get_signup_data(email) #get the user's data which is stored in previous function
+            if user_data is None:
+                return api_response(Status=status.HTTP_401_UNAUTHORIZED, success=False, data={}, message="", error="no pending signup with this email")
+            
+            secret_base32 = user_data["secret_base32"]
+            first_name = user_data["first_name"]
+            last_name = user_data["last_name"]
+
+        except Exception as e:
+            logger.error(e)
+            return api_response(Status=status.HTTP_500_INTERNAL_SERVER_ERROR, success=False, data={}, message="", error="an error occured, try again in 5 minutes")
+
+        # generate otp
+        try:
+            otp = services.generate_otp(secret_base32)
+            
+        except Exception as e:
+            logger.error(f"an error occured while generating otp -> {e}")
+            return api_response(Status=status.HTTP_500_INTERNAL_SERVER_ERROR, success=False, data={}, message="", error="an internal error occured. try again later .")
+
+
+        # send otp email
+        try:
+            services.send_email(email, "OTP CODE FROM CHATMAN", f"Hi dear {first_name} {last_name}. here is your OTP Code: {otp}")
+            logger.info(f"otp sent to {email} | {otp}")
+
+        except Exception as e:
+            logger.error(f"an error occured while sending otp email to user -> {e}")
+            return api_response(Status=status.HTTP_500_INTERNAL_SERVER_ERROR, success=False, data={}, message="", error="an internal error occured while sending email. try again later.")
+        
+        return Response({"message":"another email with verification code sent to your email"}, status=200)
 
 
 class PasswordResetRequestView(APIView):
@@ -132,7 +180,7 @@ class PasswordResetRequestView(APIView):
             user = services.get_user_by_email(email)
         except Exception as e:
             logger.error(f"an error occured while getting user based on its email -> {e}")
-            return Response({"error":"an error occured while reseting password"}, status=400)
+            return api_response(Status=status.HTTP_400_BAD_REQUEST, success=False, data={}, message="", error="an error occured while reseting password, try again later.")
         
         #send email if user exists, and return 200 even if it doesn't exists, to prevent user enumeration
 
@@ -143,16 +191,16 @@ class PasswordResetRequestView(APIView):
                 token = models.PasswordResetToken.objects.create(user=user, expires_at=expires_at)
             except Exception as e:
                 logger.error(f"an error occured while creating PasswordResetToken record for {user} -> {e}")
-                return Response({"error":"an error occured while generating new reset password link "}, status=400)
+                return api_response(Status=status.HTTP_500_INTERNAL_SERVER_ERROR, success=False, data={}, message="", error="an error occured while generating new reset password link ")
             
             #send link via email
             try:
                 services.send_email(email=user.email, sub="Rest Password Link", body=token.uid)
             except Exception as e:
                 logger.error(f"an error occured while emailing reset link to {user} -> {e} ")
-                return Response({"error":"couldn't send email"}, 400)
+                return api_response(Status=status.HTTP_500_INTERNAL_SERVER_ERROR, success=False, data={}, message="", error="couldn't send email")
             
-        return Response({"message":"If your email exists, you'll recieve a reset link."})
+        return api_response(Status=status.HTTP_200_OK, success=True, data={}, message="If your email exists, you'll recieve a reset link.", error="")
     
 
 class PasswordResetConfirmView(APIView):
@@ -238,7 +286,6 @@ class LogoutView(APIView):
         response.delete_cookie("refresh_token")  # clear cookie
         return response
 
-    
 
 class LoadProfile(APIView):
     permission_classes = [IsAuthenticated]
@@ -258,3 +305,25 @@ class LoadProfile(APIView):
         "username": user.username,
         "profile_picture": user.profile_picture.url,
         }, status=status.HTTP_200_OK)
+
+
+class SearchUser(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        query = request.query_params.get("q", "").lstrip("@")
+        if not query:
+            return Response({"results":[]})
+        
+        users = User.objects.filter(username__istartswith=query).exclude(id=request.user.id)[:10]
+        results = [
+            {
+                "id": f"u{u.id}",
+                "userName" : u.username,
+                "fullName" : f"{u.first_name} {u.last_name}",
+                "chatRoomName": f"pv_{max(u.id, request.user.id)}{min(request.user.id,u.id)}",
+                "profilePicture" : u.profile_picture.url
+            }
+            for u in users
+        ]
+        return Response({"results": results}, status=status.HTTP_200_OK)

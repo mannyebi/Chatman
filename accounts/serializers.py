@@ -34,9 +34,13 @@ class CompleteSignupSerializer(serializers.Serializer):
         otp = str(attrs.get("otp"))
 
         if len(otp) != 6:
-            raise serializers.ValidationError("Invalid OTP 2")
+            raise serializers.ValidationError("Invalid OTP")
         
         return attrs
+    
+
+class ResendOtpSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
 
 
 class ResetPasswordConfirmSerializer(serializers.Serializer):

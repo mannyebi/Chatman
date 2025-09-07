@@ -32,7 +32,7 @@ class UploadFile(APIView):
 
             uploaded_file = chat_services.save_file(uploader=user, file=file, filename=file.name, content_type=file.content_type)
             upload_list.append({uploaded_file.pk:file.name})
-        return Response({"message": f"{len(files)} files uploaded", "file_pks":upload_list}, status=status.HTTP_200_OK)
+        return Response({"message": f"{len(files)} files uploaded", "filesData":upload_list}, status=status.HTTP_200_OK)
 
 
 class CreatePrivateChatRoom(APIView):
@@ -249,6 +249,7 @@ class UserChatList(APIView):
                 chat_list.append([{
                 "id":chat.id,
                 "name": chat.chatroom_name(user),
+                "username": chat.chatroom_username(user),
                 "chatroom_name" : chat.name,
                 "lastMessage" : chat.messages.last().text,
                 "time" : chat.messages.last().timestamp,
@@ -260,6 +261,7 @@ class UserChatList(APIView):
                 chat_list.append([{
                 "id":chat.id,
                 "name": chat.chatroom_name(user),
+                "username": chat.chatroom_username(user),
                 "chatroom_name" : chat.name,
                 "lastMessage" : "",
                 "time" : "",
