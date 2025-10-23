@@ -86,7 +86,9 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 file_pks = content.get("file_pks", [])
                 await self.handle_file_message(user, file_pks)
             elif type == "typing.status":
-                await self.handle_typing_status(user)
+                is_typing = content.get("is_typing", False)
+                username = content.get("username")
+                await self.handle_typing_status(is_typing, username)
 
             elif type == "delete.message":
                 #TODO: ensure the user can only delete a message from it self.
@@ -182,12 +184,13 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             }
         )
     
-    async def handle_typing_status(self, user):
+    async def handle_typing_status(self, is_typing, username):
         await self.channel_layer.group_send(
             self.room_group_name,
             {
                 "type" : "typing.status",
-                "username" : user.username 
+                "username" : username ,
+                "is_typing" : is_typing 
             }
         )
 
@@ -274,7 +277,8 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     async def typing_status(self, event):
         await self.send_json({
             "type" : "typing.status",
-            "username" : event['username']
+            "username" : event['username'],
+            "is_typing" : event['is_typing']
         })
 
     async def delete_message(self, event):

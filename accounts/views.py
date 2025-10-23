@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework import status
+from rest_framework import status, serializers
 from . import services
 from . import signup_storage
 import logging
@@ -16,7 +16,9 @@ from django.contrib.auth import get_user_model
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.shortcuts import get_object_or_404
 from chatman.api_schman import api_response
-
+from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiParameter
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 # Create your views here.
 
@@ -25,6 +27,10 @@ frontend_domain = "https://test.com" #TODO: get this from .env later
 User = get_user_model()
 
 class SignUpView(APIView):
+    @extend_schema(
+        request=StarterSignupSerializer,
+        responses={200: serializers.JSONField()}
+    )
     def post(self, request):
 
         serializer = StarterSignupSerializer(data=request.data)
@@ -73,6 +79,10 @@ class SignUpView(APIView):
 
 
 class ValidateUsersOtp(APIView):
+    @extend_schema(
+        request=CompleteSignupSerializer,
+        responses={200: serializers.JSONField()}
+    )
     def post(self, request):
 
         serializer = CompleteSignupSerializer(data=request.data)
@@ -126,7 +136,10 @@ class ValidateUsersOtp(APIView):
 
 
 class ResendOtpEmail(APIView):
-
+    @extend_schema(
+        request=ResendOtpSerializer,
+        responses={200: serializers.JSONField()}
+    )
     def post(self, request):
 
         serializer = ResendOtpSerializer(data=request.data)
@@ -204,7 +217,10 @@ class PasswordResetRequestView(APIView):
     
 
 class PasswordResetConfirmView(APIView):
-
+    @extend_schema(
+        request=ResetPasswordConfirmSerializer,
+        responses={200: serializers.JSONField()}
+    )
     def post(self, request):
         serializer = ResetPasswordConfirmSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -230,7 +246,10 @@ class PasswordResetConfirmView(APIView):
 class UpadteAccountView(APIView):
     permission_classes = [IsAuthenticated]
     parser_classes = (MultiPartParser, FormParser)
-
+    @extend_schema(
+        request=UpdateAccountSerializer,
+        responses={200: serializers.JSONField()}
+    )
     def post(self, request):
 
         user = request.user
@@ -255,10 +274,6 @@ class UpadteAccountView(APIView):
         return Response(user_profile, status=200)
 
 
-
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework_simplejwt.views import TokenObtainPairView
-
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
@@ -268,11 +283,27 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         return token
     
+    
 class MyTokenPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
 
 
 class LogoutView(APIView):
+    @extend_schema(
+        description="Log out the current user by blacklisting their refresh token and clearing it from cookies.",
+        responses={
+            205: OpenApiExample(
+                "Successful logout",
+                summary="Logout success",
+                value={"detail": "User logged out successfully."}
+            ),
+            400: OpenApiExample(
+                "Invalid or missing token",
+                summary="Logout failed",
+                value={"detail": "Invalid or expired token."}
+            ),
+        },
+    )
     def post(self, request):
         try:
             refresh_token = request.COOKIES.get("refresh_token")
@@ -280,49 +311,112 @@ class LogoutView(APIView):
                 token = RefreshToken(refresh_token)
                 token.blacklist()
         except Exception:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": "Invalid or expired token."}, status=status.HTTP_400_BAD_REQUEST)
         
-        response = Response(status=status.HTTP_205_RESET_CONTENT)
-        response.delete_cookie("refresh_token")  # clear cookie
+        response = Response({"detail": "User logged out successfully."}, status=status.HTTP_205_RESET_CONTENT)
+        response.delete_cookie("refresh_token")
         return response
+
 
 
 class LoadProfile(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        description="Fetch a user's public profile information by username.",
+        parameters=[
+            OpenApiParameter(
+                name="username",
+                description="Username of the user whose profile should be loaded.",
+                required=True,
+                type=str,
+                location=OpenApiParameter.QUERY,
+            ),
+        ],
+        responses={
+            200: OpenApiExample(
+                "Profile loaded successfully",
+                summary="Profile data example",
+                value={
+                    "first_name": "John",
+                    "last_name": "Doe",
+                    "bio": "Loves coding and coffee ☕",
+                    "username": "johndoe",
+                    "profile_picture": "https://example.com/media/profile.jpg",
+                },
+            ),
+            404: OpenApiExample(
+                "User not found",
+                summary="Profile not found",
+                value={"detail": "Not found."},
+            ),
+        },
+    )
     def get(self, request):
-        """return user's profile information.
-
-        username: enter the user's username that you want its profile to fetch in url query.
-        """
-        username = self.request.query_params.get('username')
+        username = request.query_params.get("username")
         user = get_object_or_404(User, username=username)
 
         return Response({
-        "first_name":user.first_name,
-        "last_name":user.last_name,
-        "bio":user.bio,
-        "username": user.username,
-        "profile_picture": user.profile_picture.url,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "bio": user.bio,
+            "username": user.username,
+            "profile_picture": user.profile_picture.url,
         }, status=status.HTTP_200_OK)
 
 
 class SearchUser(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        description="Search for users by username prefix. Excludes the current user. Returns a maximum of 10 results.",
+        parameters=[
+            OpenApiParameter(
+                name="q",
+                description="Search query (partial username). Use '@' prefix optionally.",
+                required=False,
+                type=str,
+                location=OpenApiParameter.QUERY,
+            ),
+        ],
+        responses={
+            200: OpenApiExample(
+                "Search results example",
+                summary="Example search response",
+                value={
+                    "results": [
+                        {
+                            "id": "u12",
+                            "userName": "alex",
+                            "fullName": "Alex Johnson",
+                            "chatRoomName": "pv_2112",
+                            "profilePicture": "https://example.com/media/profiles/alex.jpg"
+                        },
+                        {
+                            "id": "u15",
+                            "userName": "anna",
+                            "fullName": "Anna Lee",
+                            "chatRoomName": "pv_2115",
+                            "profilePicture": "https://example.com/media/profiles/anna.jpg"
+                        }
+                    ]
+                },
+            )
+        },
+    )
     def get(self, request):
         query = request.query_params.get("q", "").lstrip("@")
         if not query:
-            return Response({"results":[]})
+            return Response({"results": []})
         
         users = User.objects.filter(username__istartswith=query).exclude(id=request.user.id)[:10]
         results = [
             {
                 "id": f"u{u.id}",
-                "userName" : u.username,
-                "fullName" : f"{u.first_name} {u.last_name}",
-                "chatRoomName": f"pv_{max(u.id, request.user.id)}{min(request.user.id,u.id)}",
-                "profilePicture" : u.profile_picture.url
+                "userName": u.username,
+                "fullName": f"{u.first_name} {u.last_name}",
+                "chatRoomName": f"pv_{max(u.id, request.user.id)}{min(request.user.id, u.id)}",
+                "profilePicture": u.profile_picture.url
             }
             for u in users
         ]

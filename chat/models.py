@@ -104,9 +104,11 @@ class Message(models.Model):
     room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name="messages")
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="messages")
     text = models.TextField(null=True, blank=True)
-    files = models.ManyToManyField(File, related_name="messages", blank=True, null=True)
+    files = models.ManyToManyField(File, related_name="messages", blank=True)
     transaction = models.ForeignKey(Transaction, on_delete=models.SET_NULL, related_name="transfer_notifications", null=True, blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)
+
+    seen_by = models.ManyToManyField(User, through="MessageSeen", related_name="seen_messages", blank=True)
 
     class Meta:
         ordering = ["timestamp"]
@@ -120,3 +122,18 @@ class Message(models.Model):
             return f'{self.sender.username} sent {self.files.count()} files'
         return f'{self.sender.username}: {self.text[:20]}'
         
+
+class MessageSeen(models.Model):
+    message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name="message_seen_set")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="message_seen_set")
+    seen_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("message", "user")
+        indexes = [
+            models.Index(fields=['message', 'user']),
+            models.Index(fields=['user', 'seen_at'])
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} saw message {self.message.id} at {self.seen_at}"

@@ -273,3 +273,21 @@ class UserChatList(APIView):
         return Response({"chatList":chat_list}, status=status.HTTP_200_OK)
 
         
+# class AddSeenBy(APIView):
+#     permission_classes=[IsAuthenticated]
+
+#     def post(self, request):
+#         message_id = request.data.get("message_id")
+#         reader_username = request.data.get("reader_username")
+
+#         message = get_object_or_404(Message, id=message_id)
+#         reader = get_object_or_404(User, username=reader_username)
+
+#         if not message or reader:
+#             ... #raise error
+
+#         try:
+#             chat_services.add_seen_by(message, reader)
+#             #return successful json messag
+#         except Exception as e:
+#             ... #raise error 
